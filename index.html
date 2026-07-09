@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karteikasten — Deutsch → Română</title>
+<style>
+  :root{
+    --paper:#F7F3EA;
+    --paper-dim:#EFE9DA;
+    --ink:#201B14;
+    --muted:#8A8171;
+    --red:#C1272D;
+    --red-dim:#e6d3d0;
+    --amber:#B8781E;
+    --amber-dim:#f0ddc0;
+    --teal:#2F6F62;
+    --teal-dim:#d6e6e2;
+    --line:#D9D2C2;
+    --card:#FFFDF8;
+    --shadow: 0 2px 0 rgba(32,27,20,0.06), 0 8px 24px rgba(32,27,20,0.08);
+    --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  }
+  body.dark{
+    --paper:#171410;
+    --paper-dim:#211D17;
+    --ink:#F0EBDD;
+    --muted:#948C79;
+    --red:#E2564F;
+    --red-dim:#3A2320;
+    --amber:#E0A24C;
+    --amber-dim:#3A2E18;
+    --teal:#5FA695;
+    --teal-dim:#1D2E29;
+    --line:#3A352A;
+    --card:#1E1A14;
+    --shadow: 0 2px 0 rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.45);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:
+      linear-gradient(var(--paper), var(--paper));
+    background-color:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 16px 60px;
+    transition:background-color 0.2s, color 0.2s;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+
+  .app{ width:100%; max-width:640px; }
+
+  header.top{
+    display:flex; align-items:baseline; justify-content:space-between;
+    border-bottom:2px solid var(--ink); padding-bottom:10px; margin-bottom:18px;
+    flex-wrap:wrap; gap:8px;
+  }
+  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand .stamp{
+    font-family:var(--font-display); font-weight:700; font-size:1.5rem;
+    letter-spacing:0.5px;
+  }
+  .brand .stamp span{ color:var(--red); }
+  .brand .sub{ font-size:0.78rem; color:var(--muted); font-family:var(--font-mono); letter-spacing:0.5px;}
+
+  nav.tabs{ display:flex; gap:4px; }
+  nav.tabs button{
+    font-family:var(--font-mono); font-size:0.75rem; letter-spacing:0.5px;
+    background:none; border:1px solid var(--line); color:var(--muted);
+    padding:6px 12px; border-radius:999px; cursor:pointer; text-transform:uppercase;
+  }
+  nav.tabs button.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+  nav.tabs button:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--red); outline-offset:2px;
+  }
+
+  /* Leitner box strip */
+  .boxes{
+    display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:24px;
+  }
+  .box{
+    background:var(--paper-dim); border:1px solid var(--line); border-radius:6px 6px 3px 3px;
+    padding:8px 4px; text-align:center; position:relative;
+    border-bottom-width:4px;
+  }
+  .box .n{ font-family:var(--font-mono); font-size:1.1rem; font-weight:600; }
+  .box .l{ font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; margin-top:2px;}
+  .box[data-box="1"]{ border-bottom-color: var(--red); }
+  .box[data-box="2"]{ border-bottom-color: var(--amber); }
+  .box[data-box="3"]{ border-bottom-color: #C9A227; }
+  .box[data-box="4"]{ border-bottom-color: #6E9B3F; }
+  .box[data-box="5"]{ border-bottom-color: var(--teal); }
+
+  /* Practice view */
+  .practice-meta{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:var(--font-mono); font-size:0.78rem; color:var(--muted); margin-bottom:10px;
+  }
+  .scene{ perspective:1400px; margin-bottom:18px; }
+  .card{
+    position:relative; width:100%; height:280px;
+    transform-style:preserve-3d; transition:transform 0.5s ease;
+    cursor:pointer;
+  }
+  .card.flipped{ transform:rotateY(180deg); }
+  .face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    background:var(--card); border:1px solid var(--line); border-radius:4px 10px 10px 4px;
+    box-shadow:var(--shadow);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:24px;
+  }
+  .face::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:6px;
+    background:var(--red); border-radius:4px 0 0 4px;
+  }
+  .face.back{ transform:rotateY(180deg); }
+  .direction-tag{
+    position:absolute; top:12px; right:16px; font-family:var(--font-mono);
+    font-size:0.65rem; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase;
+  }
+  .word-main{ font-family:var(--font-display); font-size:2rem; line-height:1.2; }
+  .word-note{ font-size:0.85rem; color:var(--muted); margin-top:12px; font-style:italic; max-width:36ch; }
+  .hint{ font-size:0.7rem; color:var(--muted); margin-top:18px; font-family:var(--font-mono); }
+
+  .rate-row{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .rate-row button{
+    padding:14px 6px; border-radius:8px; border:1px solid var(--line);
+    font-family:var(--font-body); font-weight:600; font-size:0.85rem; cursor:pointer;
+    background:var(--paper-dim); color:var(--ink);
+  }
+  .rate-row button:disabled{ opacity:0.35; cursor:not-allowed; }
+  .rate-row button.again{ background:var(--red-dim); }
+  .rate-row button.good{ background:var(--amber-dim); }
+  .rate-row button.easy{ background:var(--teal-dim); }
+  .rate-row button small{ display:block; font-family:var(--font-mono); font-weight:400; color:var(--muted); margin-top:3px; }
+
+  .empty, .summary{
+    background:var(--card); border:1px solid var(--line); border-radius:8px;
+    padding:32px 24px; text-align:center;
+  }
+  .empty h2, .summary h2{ font-family:var(--font-display); margin-top:0; }
+  .btn{
+    font-family:var(--font-body); font-weight:600; font-size:0.85rem;
+    background:var(--ink); color:var(--paper); border:none; border-radius:6px;
+    padding:10px 18px; cursor:pointer;
+  }
+  .btn.secondary{ background:none; border:1px solid var(--ink); color:var(--ink); }
+  .btn.danger{ background:var(--red); color:#fff; }
+
+  /* Manage view */
+  .panel{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:18px; margin-bottom:16px; }
+  .panel h3{ margin-top:0; font-family:var(--font-display); font-size:1.05rem; }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+  .field{ flex:1; min-width:140px; display:flex; flex-direction:column; gap:4px; }
+  .field label{ font-size:0.7rem; color:var(--muted); font-family:var(--font-mono); text-transform:uppercase; }
+  input[type=text], textarea{
+    font-family:var(--font-body); font-size:0.95rem; padding:9px 10px;
+    border:1px solid var(--line); border-radius:5px; background:var(--paper); color:var(--ink);
+  }
+  textarea{ min-height:80px; resize:vertical; font-family:var(--font-mono); font-size:0.82rem; }
+  .wordlist{ max-height:340px; overflow-y:auto; }
+  .wordrow{
+    display:flex; align-items:center; gap:10px; padding:8px 0;
+    border-bottom:1px solid var(--line); font-size:0.88rem;
+  }
+  .wordrow .de{ font-weight:600; min-width:120px; }
+  .wordrow .ro{ color:var(--muted); flex:1; }
+  .wordrow .meta{ font-family:var(--font-mono); font-size:0.68rem; color:var(--muted); }
+  .wordrow button{ background:none; border:none; color:var(--red); cursor:pointer; font-size:0.75rem; }
+  .filecontrols{ display:flex; gap:10px; flex-wrap:wrap; }
+  .filecontrols input[type=file]{ display:none; }
+  .count-line{ font-family:var(--font-mono); font-size:0.75rem; color:var(--muted); margin-bottom:10px; }
+
+  /* Stats */
+  .statgrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .stat{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:16px; text-align:center; }
+  .stat .big{ font-family:var(--font-mono); font-size:1.6rem; font-weight:700; }
+  .stat .lbl{ font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; }
+
+  /* Help tab */
+  .help-step{ display:flex; gap:14px; margin-bottom:18px; }
+  .help-step .num{
+    font-family:var(--font-display); font-size:1.3rem; color:var(--red);
+    min-width:28px; flex-shrink:0;
+  }
+  .help-step h4{ margin:0 0 4px; font-family:var(--font-body); font-size:0.95rem; }
+  .help-step p{ margin:0; font-size:0.85rem; color:var(--muted); line-height:1.5; }
+  .help-note{
+    background:var(--paper-dim); border-left:3px solid var(--amber);
+    padding:10px 14px; font-size:0.82rem; border-radius:0 6px 6px 0; margin-top:6px;
+  }
+
+  footer{ margin-top:24px; font-size:0.7rem; color:var(--muted); text-align:center; font-family:var(--font-mono); }
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:var(--paper); padding:9px 16px; border-radius:6px;
+    font-size:0.8rem; opacity:0; pointer-events:none; transition:opacity 0.3s;
+  }
+  .toast.show{ opacity:1; }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="stamp">Karteikasten<span>.</span></div>
+      <div class="sub">DEUTSCH → ROMÂNĂ</div>
+    </div>
+    <nav class="tabs">
+      <button data-tab="practice" class="active">Üben</button>
+      <button data-tab="manage">Wörter</button>
+      <button data-tab="stats">Statistik</button>
+      <button data-tab="help">Hilfe</button>
+      <button id="themeToggle" title="Dunkelmodus umschalten">◐</button>
+    </nav>
+  </header>
+
+  <div class="boxes" id="boxStrip"></div>
+
+  <div id="view"></div>
+
+  <footer>Karteikasten · Leitner-System · gespeichert lokal in diesem Chat</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  const INTERVALS = {1:1, 2:2, 3:4, 4:9, 5:21}; // days per box
+  const SESSION_SIZE = 15;
+  const MIN_SESSION = 10;
+
+  let words = [];
+  let session = null; // {cards:[], idx, results:{again,good,easy}}
+  let currentTab = 'practice';
+  let loaded = false;
+
+  const viewEl = document.getElementById('view');
+  const boxStripEl = document.getElementById('boxStrip');
+  const toastEl = document.getElementById('toast');
+
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  function addDays(dateStr, n){
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0,10);
+  }
+  function uid(){ return 'w_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(()=>toastEl.classList.remove('show'), 1800);
+  }
+
+  async function loadWords(){
+    try{
+      const res = await window.storage.get('vocab-words', false);
+      words = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){
+      words = [];
+    }
+    loaded = true;
+  }
+  async function saveWords(){
+    try{
+      await window.storage.set('vocab-words', JSON.stringify(words), false);
+    }catch(e){
+      showToast('Speichern fehlgeschlagen — bitte erneut versuchen');
+    }
+  }
+
+  function dueWords(){
+    const t = todayStr();
+    return words.filter(w => w.nextReview <= t);
+  }
+
+  function renderBoxStrip(){
+    let html = '';
+    for(let b=1; b<=5; b++){
+      const count = words.filter(w=>w.box===b).length;
+      html += `<div class="box" data-box="${b}"><div class="n">${count}</div><div class="l">Box ${b}</div></div>`;
+    }
+    boxStripEl.innerHTML = html;
+  }
+
+  // ---------- PRACTICE ----------
+  function buildSession(force){
+    const t = todayStr();
+    let pool = force ? words.slice() : dueWords();
+    if(pool.length === 0){ session = null; return; }
+    pool.sort((a,b)=> a.nextReview.localeCompare(b.nextReview));
+    pool = pool.slice(0, SESSION_SIZE);
+    const cards = pool.map(w => ({
+      wordId: w.id,
+      direction: Math.random() < 0.5 ? 'de2ro' : 'ro2de'
+    }));
+    // shuffle
+    for(let i=cards.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [cards[i],cards[j]] = [cards[j],cards[i]];
+    }
+    session = { cards, idx:0, flipped:false, results:{again:0,good:0,easy:0} };
+  }
+
+  function wordById(id){ return words.find(w=>w.id===id); }
+
+  function renderPractice(){
+    if(!session){
+      buildSession(false);
+    }
+    if(!session){
+      const total = words.length;
+      viewEl.innerHTML = total === 0 ? `
+        <div class="empty">
+          <h2>Noch keine Wörter</h2>
+          <p>Füge dein erstes Wort im Tab „Wörter" hinzu, wenn du beim Lesen von Deutsch Perfekt auf etwas Neues stößt.</p>
+          <button class="btn" id="goManage">Wort hinzufügen</button>
+        </div>` : `
+        <div class="empty">
+          <h2>Heute nichts fällig</h2>
+          <p>Alle ${total} Wörter sind noch nicht zur Wiederholung dran. Du kannst trotzdem eine freie Runde üben.</p>
+          <button class="btn" id="forcePractice">Trotzdem üben</button>
+        </div>`;
+      const gm = document.getElementById('goManage');
+      if(gm) gm.onclick = ()=>switchTab('manage');
+      const fp = document.getElementById('forcePractice');
+      if(fp) fp.onclick = ()=>{ buildSession(true); renderPractice(); };
+      return;
+    }
+
+    if(session.idx >= session.cards.length){
+      const r = session.results;
+      viewEl.innerHTML = `
+        <div class="summary">
+          <h2>Runde fertig</h2>
+          <p><strong>${r.again}</strong> Nochmal · <strong>${r.good}</strong> Gut · <strong>${r.easy}</strong> Leicht</p>
+          <button class="btn" id="newRound">Neue Runde</button>
+        </div>`;
+      document.getElementById('newRound').onclick = ()=>{ session=null; renderPractice(); };
+      return;
+    }
+
+    const c = session.cards[session.idx];
+    const w = wordById(c.wordId);
+    if(!w){ session.idx++; renderPractice(); return; }
+    const front = c.direction === 'de2ro' ? w.de : w.ro;
+    const back = c.direction === 'de2ro' ? w.ro : w.de;
+    const dirLabel = c.direction === 'de2ro' ? 'DE → RO' : 'RO → DE';
+
+    viewEl.innerHTML = `
+      <div class="practice-meta">
+        <span>Karte ${session.idx+1} / ${session.cards.length}</span>
+        <span>Box ${w.box}</span>
+      </div>
+      <div class="scene">
+        <div class="card" id="flipCard">
+          <div class="face front">
+            <div class="direction-tag">${dirLabel}</div>
+            <div class="word-main">${escapeHtml(front)}</div>
+            <div class="hint">Tippen oder Leertaste zum Umdrehen</div>
+          </div>
+          <div class="face back">
+            <div class="direction-tag">${dirLabel}</div>
+            <div class="word-main">${escapeHtml(back)}</div>
+            ${w.note ? `<div class="word-note">${escapeHtml(w.note)}</div>` : ''}
+          </div>
+        </div>
+      </div>
+      <div class="rate-row">
+        <button class="again" id="rateAgain" disabled>Nochmal<small>Box 1</small></button>
+        <button class="good" id="rateGood" disabled>Gut<small>+1 Box</small></button>
+        <button class="easy" id="rateEasy" disabled>Leicht<small>+2 Boxen</small></button>
+      </div>
+    `;
+
+    const cardEl = document.getElementById('flipCard');
+    const btnAgain = document.getElementById('rateAgain');
+    const btnGood = document.getElementById('rateGood');
+    const btnEasy = document.getElementById('rateEasy');
+
+    function doFlip(){
+      cardEl.classList.add('flipped');
+      btnAgain.disabled = false; btnGood.disabled = false; btnEasy.disabled = false;
+    }
+    cardEl.onclick = doFlip;
+    document.onkeydown = (e)=>{
+      if(currentTab !== 'practice') return;
+      if(e.code === 'Space'){ e.preventDefault(); if(!cardEl.classList.contains('flipped')) doFlip(); }
+      if(cardEl.classList.contains('flipped')){
+        if(e.key === '1') btnAgain.click();
+        if(e.key === '2') btnGood.click();
+        if(e.key === '3') btnEasy.click();
+      }
+    };
+    btnAgain.onclick = ()=>rate(w,'again');
+    btnGood.onclick = ()=>rate(w,'good');
+    btnEasy.onclick = ()=>rate(w,'easy');
+  }
+
+  function rate(w, kind){
+    const t = todayStr();
+    if(kind==='again'){
+      w.box = 1;
+      w.nextReview = addDays(t, INTERVALS[1]);
+      session.results.again++;
+    } else if(kind==='good'){
+      w.box = Math.min(w.box+1, 5);
+      w.nextReview = addDays(t, INTERVALS[w.box]);
+      session.results.good++;
+    } else {
+      w.box = Math.min(w.box+2, 5);
+      w.nextReview = addDays(t, INTERVALS[w.box]);
+      session.results.easy++;
+    }
+    saveWords();
+    session.idx++;
+    renderBoxStrip();
+    renderPractice();
+  }
+
+  // ---------- MANAGE ----------
+  function renderManage(){
+    viewEl.innerHTML = `
+      <div class="panel">
+        <h3>Neues Wort</h3>
+        <div class="row">
+          <div class="field"><label>Deutsch</label><input type="text" id="inDe" placeholder="z. B. die Nachhaltigkeit"></div>
+          <div class="field"><label>Română</label><input type="text" id="inRo" placeholder="ex. sustenabilitate"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label>Notiță (optional)</label><input type="text" id="inNote" placeholder="Beispielsatz oder Kontext"></div>
+        </div>
+        <button class="btn" id="addWordBtn">Wort speichern</button>
+      </div>
+
+      <div class="panel">
+        <h3>Mehrere Wörter einfügen</h3>
+        <textarea id="bulkInput" placeholder="ein Wort pro Zeile, z. B.:&#10;die Nachhaltigkeit - sustenabilitate&#10;der Umweltschutz - protecția mediului"></textarea>
+        <div class="row" style="margin-top:8px;">
+          <button class="btn secondary" id="bulkAddBtn">Alle hinzufügen</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Vokabelliste</h3>
+        <div class="count-line">${words.length} Wörter gesamt</div>
+        <div class="wordlist" id="wordlist"></div>
+        <div class="filecontrols" style="margin-top:14px;">
+          <button class="btn secondary" id="exportBtn">JSON exportieren</button>
+          <label class="btn secondary" for="importFile" style="cursor:pointer;">JSON importieren</label>
+          <input type="file" id="importFile" accept="application/json">
+        </div>
+      </div>
+    `;
+    renderWordList();
+
+    document.getElementById('addWordBtn').onclick = ()=>{
+      const de = document.getElementById('inDe').value.trim();
+      const ro = document.getElementById('inRo').value.trim();
+      const note = document.getElementById('inNote').value.trim();
+      if(!de || !ro){ showToast('Bitte Deutsch und Română ausfüllen'); return; }
+      words.push({ id: uid(), de, ro, note, box:1, nextReview: todayStr(), createdAt: todayStr() });
+      saveWords();
+      renderBoxStrip();
+      renderManage();
+      showToast('Wort gespeichert');
+    };
+
+    document.getElementById('bulkAddBtn').onclick = ()=>{
+      const raw = document.getElementById('bulkInput').value;
+      const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+      let added = 0;
+      lines.forEach(line=>{
+        const parts = line.split(/\s-\s|\t|;/);
+        if(parts.length >= 2){
+          const de = parts[0].trim();
+          const ro = parts[1].trim();
+          if(de && ro){
+            words.push({ id: uid(), de, ro, note:'', box:1, nextReview: todayStr(), createdAt: todayStr() });
+            added++;
+          }
+        }
+      });
+      if(added>0){ saveWords(); renderBoxStrip(); renderManage(); showToast(`${added} Wörter hinzugefügt`); }
+      else showToast('Kein gültiges Format gefunden (Wort - Übersetzung)');
+    };
+
+    document.getElementById('exportBtn').onclick = ()=>{
+      const blob = new Blob([JSON.stringify(words, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'vokabeln.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+
+    document.getElementById('importFile').onchange = (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try{
+          const imported = JSON.parse(reader.result);
+          if(Array.isArray(imported)){
+            imported.forEach(w=>{
+              if(w.de && w.ro){
+                words.push({
+                  id: w.id || uid(), de:w.de, ro:w.ro, note:w.note||'',
+                  box: w.box||1, nextReview: w.nextReview||todayStr(),
+                  createdAt: w.createdAt||todayStr()
+                });
+              }
+            });
+            saveWords(); renderBoxStrip(); renderManage();
+            showToast('Import erfolgreich');
+          }
+        }catch(err){ showToast('Ungültige JSON-Datei'); }
+      };
+      reader.readAsText(file);
+    };
+  }
+
+  function renderWordList(){
+    const listEl = document.getElementById('wordlist');
+    if(words.length === 0){
+      listEl.innerHTML = '<div class="count-line">Noch keine Wörter gespeichert.</div>';
+      return;
+    }
+    const sorted = words.slice().sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||''));
+    listEl.innerHTML = sorted.map(w => `
+      <div class="wordrow">
+        <div class="de">${escapeHtml(w.de)}</div>
+        <div class="ro">${escapeHtml(w.ro)}</div>
+        <div class="meta">Box ${w.box}</div>
+        <button data-id="${w.id}" class="delBtn">löschen</button>
+      </div>
+    `).join('');
+    listEl.querySelectorAll('.delBtn').forEach(btn=>{
+      btn.onclick = ()=>{
+        words = words.filter(w=>w.id !== btn.dataset.id);
+        saveWords(); renderBoxStrip(); renderManage();
+      };
+    });
+  }
+
+  // ---------- STATS ----------
+  function renderStats(){
+    const total = words.length;
+    const due = dueWords().length;
+    const mastered = words.filter(w=>w.box===5).length;
+    const newToday = words.filter(w=>w.createdAt === todayStr()).length;
+    viewEl.innerHTML = `
+      <div class="statgrid">
+        <div class="stat"><div class="big">${total}</div><div class="lbl">Wörter gesamt</div></div>
+        <div class="stat"><div class="big">${due}</div><div class="lbl">Heute fällig</div></div>
+        <div class="stat"><div class="big">${mastered}</div><div class="lbl">Gemeistert (Box 5)</div></div>
+        <div class="stat"><div class="big">${newToday}</div><div class="lbl">Heute hinzugefügt</div></div>
+      </div>
+    `;
+  }
+
+  // ---------- HELP ----------
+  function renderHelp(){
+    viewEl.innerHTML = `
+      <div class="panel">
+        <h3>So funktioniert's</h3>
+        <div class="help-step">
+          <div class="num">1</div>
+          <div><h4>Wörter sammeln</h4>
+          <p>Trag beim Lesen von Deutsch Perfekt neue Wörter im Tab „Wörter" ein — einzeln oder mehrere auf einmal per Copy-Paste.</p></div>
+        </div>
+        <div class="help-step">
+          <div class="num">2</div>
+          <div><h4>Üben mit den 5 Boxen</h4>
+          <p>Jedes Wort startet in Box 1. Richtig beantwortet → wandert eine Box weiter und wird seltener abgefragt. Falsch → zurück zu Box 1, morgen wieder dran. So übst du automatisch mehr, was du noch nicht kannst.</p></div>
+        </div>
+        <div class="help-step">
+          <div class="num">3</div>
+          <div><h4>Täglich kurz reinschauen</h4>
+          <p>Eine Runde sind 10–15 fällige Karten — passt in ein paar Minuten neben dem Lesen.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Fortschritt speichern</h3>
+        <p style="font-size:0.85rem; color:var(--muted); line-height:1.5;">
+          Alles wird automatisch gespeichert, während du übst oder Wörter hinzufügst — kein Klick nötig.
+        </p>
+        <div class="help-note">
+          Für ein echtes Backup: Tab „Wörter" → <strong>JSON exportieren</strong>. Das lädt eine <code>vokabeln.json</code>-Datei mit all deinen Wörtern und deinem Fortschritt (Box, nächstes Datum) herunter.
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Fortschritt importieren</h3>
+        <p style="font-size:0.85rem; color:var(--muted); line-height:1.5;">
+          Tab „Wörter" → <strong>JSON importieren</strong> → die zuvor exportierte Datei auswählen. Die Wörter werden zur bestehenden Liste hinzugefügt (nichts wird überschrieben).
+        </p>
+      </div>
+
+      <div class="panel">
+        <h3>Selbst hosten</h3>
+        <p style="font-size:0.85rem; color:var(--muted); line-height:1.5;">
+          Diese Seite ist eine einzige HTML-Datei ohne Server oder Abhängigkeiten — einfach irgendwo hochladen (z. B. GitHub Pages, Netlify, ein eigener Webspace).
+        </p>
+        <div class="help-note">
+          Wichtig: Der automatische Speicher ist an diesen Chat gebunden. Sobald du die Datei selbst hostest, läuft sie in einem normalen Browser ohne diese Speicherfunktion. Exportiere daher regelmäßig dein JSON-Backup und importiere es beim ersten Öffnen der gehosteten Version — danach brauchst du eine kleine Anpassung im Code, damit sie stattdessen im Browser selbst speichert (localStorage), falls du das möchtest.
+        </div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(s){
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function switchTab(tab){
+    currentTab = tab;
+    document.querySelectorAll('nav.tabs button').forEach(b=>{
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    if(tab === 'practice') renderPractice();
+    else if(tab === 'manage') renderManage();
+    else if(tab === 'stats') renderStats();
+    else renderHelp();
+  }
+
+  document.querySelectorAll('nav.tabs button[data-tab]').forEach(b=>{
+    b.addEventListener('click', ()=>switchTab(b.dataset.tab));
+  });
+
+  async function loadTheme(){
+    try{
+      const res = await window.storage.get('vocab-theme', false);
+      return res && res.value === 'dark';
+    }catch(e){ return false; }
+  }
+  async function saveTheme(isDark){
+    try{ await window.storage.set('vocab-theme', isDark ? 'dark' : 'light', false); }
+    catch(e){ /* ignore */ }
+  }
+  document.getElementById('themeToggle').addEventListener('click', async ()=>{
+    const isDark = document.body.classList.toggle('dark');
+    await saveTheme(isDark);
+  });
+
+  (async function init(){
+    viewEl.innerHTML = '<div class="empty"><h2>Lade …</h2></div>';
+    const isDark = await loadTheme();
+    if(isDark) document.body.classList.add('dark');
+    await loadWords();
+    renderBoxStrip();
+    switchTab('practice');
+  })();
+})();
+</script>
+</body>
+</html>
