@@ -3,7 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Karteikasten — Vocab Trainer</title>
+<title>Karto — Vocab Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --paper:#F7F3EA;
@@ -20,7 +23,7 @@
     --card:#FFFDF8;
     --shadow: 0 2px 0 rgba(32,27,20,0.06), 0 8px 24px rgba(32,27,20,0.08);
     --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
-    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
   }
   body.dark{
@@ -114,9 +117,15 @@
     display:flex; justify-content:space-between; align-items:center;
     font-family:var(--font-mono); font-size:0.78rem; color:var(--muted); margin-bottom:10px;
   }
-  .scene{ perspective:1400px; margin-bottom:18px; }
+  .scene{ perspective:1400px; margin-bottom:18px; position:relative; }
+  .scene::before, .scene::after{
+    content:""; position:absolute; left:6px; right:6px; height:280px;
+    background:var(--paper-dim); border:1px solid var(--line); border-radius:4px 10px 10px 4px;
+  }
+  .scene::before{ top:10px; transform:rotate(-1.4deg); z-index:0; }
+  .scene::after{ top:6px; transform:rotate(1deg); z-index:0; }
   .card{
-    position:relative; width:100%; height:280px;
+    position:relative; width:100%; height:280px; z-index:1;
     transform-style:preserve-3d; transition:transform 0.5s ease;
     cursor:pointer;
   }
@@ -222,13 +231,40 @@
     font-size:0.8rem; opacity:0; pointer-events:none; transition:opacity 0.3s; max-width:80vw; text-align:center;
   }
   .toast.show{ opacity:1; }
+
+  .streak-badge{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:var(--font-mono); font-size:0.72rem; color:var(--amber);
+  }
+
+  .fab{
+    position:fixed; bottom:24px; right:24px; width:48px; height:48px;
+    border-radius:50%; background:var(--ink); color:var(--paper); border:none;
+    font-size:1.4rem; cursor:pointer; box-shadow:var(--shadow); z-index:20;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .fab-panel{
+    position:fixed; bottom:82px; right:24px; width:min(320px, calc(100vw - 48px));
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    box-shadow:var(--shadow); padding:16px; z-index:20;
+  }
+  .fab-panel h4{ margin:0 0 10px; font-family:var(--font-display); font-size:0.95rem; }
+  .fab-panel .row{ margin-bottom:8px; }
+
+  .celebrate{
+    position:fixed; top:20%; left:50%; transform:translate(-50%,0);
+    background:var(--teal); color:#fff; padding:14px 22px; border-radius:8px;
+    font-family:var(--font-display); font-size:1.1rem; box-shadow:var(--shadow);
+    opacity:0; pointer-events:none; transition:opacity 0.4s, transform 0.4s; z-index:30;
+  }
+  .celebrate.show{ opacity:1; transform:translate(-50%,-8px); }
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top">
     <div class="brand">
-      <div class="stamp">Karteikasten<span>.</span></div>
+      <div class="stamp">Karto<span>.</span></div>
       <div class="sub" id="subLabel">GERMAN → ROMANIAN</div>
     </div>
     <nav class="tabs">
@@ -246,9 +282,11 @@
 
   <div id="view"></div>
 
-  <footer>Karteikasten · Leitner system</footer>
+  <footer>Karto · Leitner system</footer>
 </div>
 <div class="toast" id="toast"></div>
+<div class="celebrate" id="celebrate"></div>
+<button class="fab" id="fabBtn" title="Quick add a word">+</button>
 
 <script>
 (function(){
@@ -271,6 +309,7 @@
   let ghErrorMsg = '';
   let ghLastSynced = null;
   let syncTimer = null;
+  let streak = { count:0, lastDate:null };
 
   const viewEl = document.getElementById('view');
   const boxStripEl = document.getElementById('boxStrip');
@@ -278,6 +317,8 @@
   const subLabelEl = document.getElementById('subLabel');
   const langToggleBtn = document.getElementById('langToggle');
   const syncBarEl = document.getElementById('syncBar');
+  const celebrateEl = document.getElementById('celebrate');
+  const fabBtn = document.getElementById('fabBtn');
 
   function todayStr(){ return new Date().toISOString().slice(0,10); }
   function addDays(dateStr, n){
@@ -315,6 +356,28 @@
   function saveLang(l){ try{ localStorage.setItem('vocab-lang', l); }catch(e){} }
   function loadTheme(){ try{ return localStorage.getItem('vocab-theme') === 'dark'; }catch(e){ return false; } }
   function saveTheme(isDark){ try{ localStorage.setItem('vocab-theme', isDark?'dark':'light'); }catch(e){} }
+
+  function loadStreak(){
+    try{
+      const raw = localStorage.getItem('vocab-streak');
+      streak = raw ? JSON.parse(raw) : { count:0, lastDate:null };
+    }catch(e){ streak = { count:0, lastDate:null }; }
+  }
+  function saveStreak(){ try{ localStorage.setItem('vocab-streak', JSON.stringify(streak)); }catch(e){} }
+  function registerPracticeToday(){
+    const t = todayStr();
+    if(streak.lastDate === t) return; // already counted today
+    if(streak.lastDate === addDays(t, -1)) streak.count += 1;
+    else streak.count = 1;
+    streak.lastDate = t;
+    saveStreak();
+  }
+
+  function showCelebration(msg){
+    celebrateEl.textContent = msg;
+    celebrateEl.classList.add('show');
+    setTimeout(()=>celebrateEl.classList.remove('show'), 1800);
+  }
 
   function loadGhConfig(){
     try{
@@ -397,7 +460,7 @@
   async function doPush(){
     ghStatus = 'syncing'; renderSyncBar();
     try{
-      await ghPushFile('Update vocab via Karteikasten');
+      await ghPushFile('Update vocab via Karto');
       ghStatus = 'synced'; ghLastSynced = new Date(); ghErrorMsg='';
     }catch(e){
       ghStatus = 'error'; ghErrorMsg = e.message;
@@ -535,6 +598,7 @@
     viewEl.innerHTML = `
       <div class="practice-meta">
         <span>Card ${session.idx+1} / ${session.cards.length}</span>
+        <span class="streak-badge">🔥 ${streak.count} day${streak.count===1?'':'s'}</span>
         <span>Box ${w.box}</span>
       </div>
       <div class="scene">
@@ -584,6 +648,7 @@
 
   function rate(w, kind){
     const t = todayStr();
+    const wasBox = w.box;
     if(kind==='again'){
       w.box = 1;
       w.nextReview = addDays(t, INTERVALS[1]);
@@ -597,6 +662,8 @@
       w.nextReview = addDays(t, INTERVALS[w.box]);
       session.results.easy++;
     }
+    registerPracticeToday();
+    if(w.box === 5 && wasBox !== 5) showCelebration(`"${w.de}" mastered — Box 5 ✓`);
     scheduleSync();
     session.idx++;
     renderBoxStrip();
@@ -924,12 +991,47 @@
     switchTab(currentTab);
   });
 
+  let fabOpen = false;
+  function closeFab(){
+    fabOpen = false;
+    const p = document.getElementById('fabPanel');
+    if(p) p.remove();
+  }
+  fabBtn.addEventListener('click', ()=>{
+    if(fabOpen){ closeFab(); return; }
+    fabOpen = true;
+    const tName = langName(currentLang);
+    const panel = document.createElement('div');
+    panel.className = 'fab-panel';
+    panel.id = 'fabPanel';
+    panel.innerHTML = `
+      <h4>Quick add (${tName})</h4>
+      <div class="row"><input type="text" id="fabDe" placeholder="German"></div>
+      <div class="row"><input type="text" id="fabTarget" placeholder="${tName}"></div>
+      <button class="btn" id="fabSave">Add</button>
+    `;
+    document.body.appendChild(panel);
+    document.getElementById('fabDe').focus();
+    document.getElementById('fabSave').onclick = ()=>{
+      const de = document.getElementById('fabDe').value.trim();
+      const target = document.getElementById('fabTarget').value.trim();
+      if(!de || !target){ showToast(`Please fill in German and ${tName}`); return; }
+      words.push({ id: uid(), de, target, lang: currentLang, note:'', box:1, nextReview: todayStr(), createdAt: todayStr() });
+      scheduleSync();
+      renderBoxStrip();
+      if(currentTab==='manage') renderManage();
+      showToast('Word added');
+      closeFab();
+    };
+  });
+
   (async function init(){
     if(loadTheme()) document.body.classList.add('dark');
     currentLang = loadLang();
     updateLangUI();
     loadWordsLocal();
     loadGhConfig();
+    loadStreak();
     renderBoxStrip();
     renderSyncBar();
     switchTab('practice');
