@@ -74,13 +74,18 @@
     -webkit-backdrop-filter:blur(20px) saturate(180%);
     border-bottom:1px solid var(--line);
   }
-  .brand{ display:flex; align-items:baseline; gap:10px; }
+  .brand{ display:flex; align-items:center; gap:10px; }
   .brand .stamp{
     font-family:var(--font-display); font-weight:700; font-size:1.3rem;
     letter-spacing:-0.02em;
   }
   .brand .stamp span{ color:var(--red); }
-  .brand .sub{ font-size:0.72rem; color:var(--muted); font-family:var(--font-body); letter-spacing:0.2px; font-weight:500; }
+  #langToggle{
+    font-size:0.72rem; color:var(--blue); font-family:var(--font-body); font-weight:600;
+    background:var(--blue-dim); border:none; padding:5px 11px; border-radius:999px; cursor:pointer;
+  }
+
+  .header-right{ display:flex; align-items:center; gap:10px; }
 
   nav.tabs{
     display:flex; gap:2px; flex-wrap:wrap; background:var(--paper-dim);
@@ -96,8 +101,11 @@
   nav.tabs button:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
     outline:2px solid var(--blue); outline-offset:2px;
   }
-  #langToggle{ font-weight:600; background:var(--paper-dim); border-radius:8px; }
-  #themeToggle{ background:var(--paper-dim); border-radius:8px; }
+  #themeToggle{
+    background:var(--card); border:1px solid var(--line); border-radius:999px;
+    width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    padding:0; font-size:1rem; box-shadow:0 1px 2px rgba(0,0,0,0.06);
+  }
 
   /* sync status pill */
   .syncbar{
@@ -280,16 +288,17 @@
   <header class="top">
     <div class="brand">
       <div class="stamp">Karto<span>.</span></div>
-      <div class="sub" id="subLabel">GERMAN → ROMANIAN</div>
+      <button id="langToggle" title="Switch language pair"></button>
     </div>
-    <nav class="tabs">
-      <button data-tab="practice" class="active">Practice</button>
-      <button data-tab="manage">Words</button>
-      <button data-tab="stats">Stats</button>
-      <button data-tab="help">Help</button>
-      <button id="langToggle" title="Switch language pair">RO ⇄ EN</button>
+    <div class="header-right">
+      <nav class="tabs">
+        <button data-tab="practice" class="active">Practice</button>
+        <button data-tab="manage">Words</button>
+        <button data-tab="stats">Stats</button>
+        <button data-tab="help">Help</button>
+      </nav>
       <button id="themeToggle" title="Toggle dark mode">◐</button>
-    </nav>
+    </div>
   </header>
 
   <div class="syncbar" id="syncBar"></div>
@@ -329,7 +338,6 @@
   const viewEl = document.getElementById('view');
   const boxStripEl = document.getElementById('boxStrip');
   const toastEl = document.getElementById('toast');
-  const subLabelEl = document.getElementById('subLabel');
   const langToggleBtn = document.getElementById('langToggle');
   const syncBarEl = document.getElementById('syncBar');
   const celebrateEl = document.getElementById('celebrate');
@@ -536,8 +544,8 @@
   }
 
   function updateLangUI(){
-    subLabelEl.textContent = `GERMAN → ${langName(currentLang).toUpperCase()}`;
-    langToggleBtn.textContent = langCode(currentLang) + ' ⇄ ' + langCode(currentLang==='ro'?'en':'ro');
+    langToggleBtn.textContent = `German → ${langName(currentLang)}`;
+    langToggleBtn.title = `Switch to German → ${langName(currentLang === 'ro' ? 'en' : 'ro')}`;
   }
 
   function renderBoxStrip(){
