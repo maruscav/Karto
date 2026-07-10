@@ -8,5 +8,15 @@
     "box": 1,
     "nextReview": "2026-07-10",
     "createdAt": "2026-07-10"
+  },
+  {
+    "id": "w_mrf0dv4g09ar5",
+    "de": "das Geräusch",
+    "target": "zgomot",
+    "lang": "ro",
+    "note": "",
+    "box": 1,
+    "nextReview": "2026-07-10",
+    "createdAt": "2026-07-10"
   }
 ]
