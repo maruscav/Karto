@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --paper:#F5F5F7;
@@ -106,18 +107,20 @@
     width:32px; height:32px; display:flex; align-items:center; justify-content:center;
     padding:0; font-size:1rem; box-shadow:0 1px 2px rgba(0,0,0,0.06);
   }
+  #signOutBtn{
+    background:var(--card); border:1px solid var(--line); border-radius:999px;
+    font-size:0.72rem; font-weight:500; color:var(--muted); padding:6px 12px; cursor:pointer;
+  }
 
-  /* sync status pill */
   .syncbar{
     display:flex; align-items:center; justify-content:flex-end; gap:8px;
-    margin-bottom:16px; font-family:var(--font-mono); font-size:0.7rem; color:var(--muted);
+    margin-bottom:16px; font-family:var(--font-body); font-size:0.74rem; color:var(--muted); font-weight:500;
   }
   .dot{ width:8px; height:8px; border-radius:50%; background:var(--muted); display:inline-block; }
   .dot.synced{ background:var(--teal); }
   .dot.pending{ background:var(--amber); }
   .dot.error{ background:var(--red); }
 
-  /* Leitner box strip */
   .boxes{
     display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:24px;
   }
@@ -134,7 +137,6 @@
   .box[data-box="4"] .n{ color: #6E9B3F; }
   .box[data-box="5"] .n{ color: var(--teal); }
 
-  /* Practice view */
   .practice-meta{
     display:flex; justify-content:space-between; align-items:center;
     font-family:var(--font-body); font-size:0.8rem; color:var(--muted); margin-bottom:10px; font-weight:500;
@@ -196,16 +198,16 @@
   .btn.secondary{ background:var(--paper-dim); border:none; color:var(--ink); }
   .btn.danger{ background:var(--red); color:#fff; }
   .btn.ghost{ background:none; border:none; color:var(--blue); text-decoration:none; padding:6px 4px; font-size:0.8rem; font-weight:500; }
-  .btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .btn.full{ width:100%; }
 
-  /* Manage view */
   .panel{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; margin-bottom:16px; box-shadow:var(--shadow); }
   .panel h3{ margin-top:0; font-family:var(--font-display); font-weight:700; letter-spacing:-0.01em; font-size:1.05rem; }
   .panel h3 .tag{ font-family:var(--font-body); font-size:0.68rem; color:var(--muted); font-weight:500; margin-left:8px; text-transform:none; }
   .row{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
   .field{ flex:1; min-width:140px; display:flex; flex-direction:column; gap:4px; }
   .field label{ font-size:0.72rem; color:var(--muted); font-family:var(--font-body); font-weight:500; text-transform:none; }
-  input[type=text], input[type=password], textarea{
+  input[type=text], input[type=password], input[type=email], textarea{
     font-family:var(--font-body); font-size:0.95rem; padding:10px 12px;
     border:1px solid var(--line); border-radius:10px; background:var(--paper-dim); color:var(--ink);
     width:100%;
@@ -220,19 +222,13 @@
   .wordrow .target{ color:var(--muted); flex:1; }
   .wordrow .meta{ font-family:var(--font-body); font-weight:500; font-size:0.7rem; color:var(--muted); background:var(--paper-dim); padding:2px 8px; border-radius:999px; }
   .wordrow button{ background:none; border:none; color:var(--red); cursor:pointer; font-size:0.78rem; font-weight:500; }
-  .filecontrols{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-  .filecontrols input[type=file]{ display:none; }
   .count-line{ font-family:var(--font-body); font-weight:500; font-size:0.78rem; color:var(--muted); margin-bottom:10px; }
-  .checkrow{ display:flex; align-items:center; gap:6px; font-size:0.8rem; color:var(--muted); margin:8px 0; }
-  .gh-status-line{ display:flex; align-items:center; gap:8px; font-family:var(--font-body); font-weight:500; font-size:0.78rem; margin-top:10px; }
 
-  /* Stats */
   .statgrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
   .stat{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; text-align:center; box-shadow:var(--shadow); }
   .stat .big{ font-family:var(--font-display); font-weight:700; font-size:1.7rem; }
   .stat .lbl{ font-size:0.74rem; color:var(--muted); text-transform:none; letter-spacing:0.1px; margin-top:2px; }
 
-  /* Help tab */
   .help-step{ display:flex; gap:14px; margin-bottom:18px; }
   .help-step .num{
     font-family:var(--font-display); font-weight:700; font-size:1.2rem; color:var(--blue);
@@ -281,67 +277,45 @@
     opacity:0; pointer-events:none; transition:opacity 0.4s, transform 0.4s; z-index:30;
   }
   .celebrate.show{ opacity:1; transform:translate(-50%,-8px); }
+
+  /* Auth screen */
+  .auth-wrap{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:70vh; width:100%; }
+  .auth-card{ width:100%; max-width:380px; background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); padding:32px 28px; }
+  .auth-card h2{ font-family:var(--font-display); font-weight:700; letter-spacing:-0.01em; margin-top:0; text-align:center; }
+  .auth-card p.sub{ text-align:center; color:var(--muted); font-size:0.85rem; margin-top:-8px; margin-bottom:20px; }
+  .auth-error{ color:var(--red); font-size:0.82rem; margin-top:10px; text-align:center; }
+  .auth-switch{ text-align:center; margin-top:16px; font-size:0.85rem; color:var(--muted); }
+  .auth-switch button{ background:none; border:none; color:var(--blue); font-weight:600; cursor:pointer; font-size:0.85rem; }
 </style>
 </head>
 <body>
-<div class="app">
-  <header class="top">
-    <div class="brand">
-      <div class="stamp">Karto<span>.</span></div>
-      <button id="langToggle" title="Switch language pair"></button>
-    </div>
-    <div class="header-right">
-      <nav class="tabs">
-        <button data-tab="practice" class="active">Practice</button>
-        <button data-tab="manage">Words</button>
-        <button data-tab="stats">Stats</button>
-        <button data-tab="help">Help</button>
-      </nav>
-      <button id="themeToggle" title="Toggle dark mode">◐</button>
-    </div>
-  </header>
-
-  <div class="syncbar" id="syncBar"></div>
-  <div class="boxes" id="boxStrip"></div>
-
-  <div id="view"></div>
-
-  <footer>Karto · Leitner system</footer>
-</div>
+<div class="app" id="appRoot"></div>
 <div class="toast" id="toast"></div>
 <div class="celebrate" id="celebrate"></div>
-<button class="fab" id="fabBtn" title="Quick add a word">+</button>
 
 <script>
 (function(){
-  const INTERVALS = {1:1, 2:2, 3:4, 4:9, 5:21}; // days per box
+  const SUPABASE_URL = 'https://ukrzdiwlpjhbxesgwarh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_Vw4Jbd3rvrWZKvszLzhdGQ_RuAXhd4J';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const INTERVALS = {1:1, 2:2, 3:4, 4:9, 5:21};
   const SESSION_SIZE = 15;
-  const SYNC_DEBOUNCE_MS = 2500;
 
+  let session = null;       // practice session
+  let authSession = null;   // supabase auth session
   let words = [];
-  let currentLang = 'ro'; // 'ro' or 'en'
-  let session = null;
+  let currentLang = 'ro';
   let currentTab = 'practice';
-  let linkedHandle = null; // File System Access API handle, in-memory only
-  const fsApiSupported = 'showSaveFilePicker' in window;
-
-  // GitHub sync state
-  let ghConfig = { owner:'', repo:'', path:'vocab.json', branch:'main' };
-  let ghToken = '';
-  let ghSha = null;
-  let ghStatus = 'off'; // off | pending | syncing | synced | error
-  let ghErrorMsg = '';
-  let ghLastSynced = null;
-  let syncTimer = null;
   let streak = { count:0, lastDate:null };
+  let authMode = 'login';   // 'login' | 'signup'
+  let authError = '';
+  let authBusy = false;
+  let dataStatus = 'idle';  // idle | loading | saving | error
 
-  const viewEl = document.getElementById('view');
-  const boxStripEl = document.getElementById('boxStrip');
+  const appRoot = document.getElementById('appRoot');
   const toastEl = document.getElementById('toast');
-  const langToggleBtn = document.getElementById('langToggle');
-  const syncBarEl = document.getElementById('syncBar');
   const celebrateEl = document.getElementById('celebrate');
-  const fabBtn = document.getElementById('fabBtn');
 
   function todayStr(){ return new Date().toISOString().slice(0,10); }
   function addDays(dateStr, n){
@@ -349,275 +323,264 @@
     d.setDate(d.getDate() + n);
     return d.toISOString().slice(0,10);
   }
-  function uid(){ return 'w_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
   function showToast(msg){
     toastEl.textContent = msg;
     toastEl.classList.add('show');
     setTimeout(()=>toastEl.classList.remove('show'), 2200);
   }
-  function langName(lang){ return lang === 'ro' ? 'Romanian' : 'English'; }
-  function langCode(lang){ return lang === 'ro' ? 'RO' : 'EN'; }
-
-  // ---------- LOCAL PERSISTENCE (per-browser cache, always on) ----------
-  function loadWordsLocal(){
-    try{
-      const raw = localStorage.getItem('vocab-words');
-      let parsed = raw ? JSON.parse(raw) : [];
-      parsed = parsed.map(w=>{
-        if(w.target === undefined && w.ro !== undefined) return { ...w, target: w.ro, lang: 'ro' };
-        if(w.lang === undefined) w.lang = 'ro';
-        return w;
-      });
-      words = parsed;
-    }catch(e){ words = []; }
-  }
-  function saveWordsLocal(){
-    try{ localStorage.setItem('vocab-words', JSON.stringify(words)); }
-    catch(e){ showToast('Could not save locally — storage may be full or blocked'); }
-  }
-  function loadLang(){ try{ return localStorage.getItem('vocab-lang') || 'ro'; }catch(e){ return 'ro'; } }
-  function saveLang(l){ try{ localStorage.setItem('vocab-lang', l); }catch(e){} }
-  function loadTheme(){ try{ return localStorage.getItem('vocab-theme') === 'dark'; }catch(e){ return false; } }
-  function saveTheme(isDark){ try{ localStorage.setItem('vocab-theme', isDark?'dark':'light'); }catch(e){} }
-
-  function loadStreak(){
-    try{
-      const raw = localStorage.getItem('vocab-streak');
-      streak = raw ? JSON.parse(raw) : { count:0, lastDate:null };
-    }catch(e){ streak = { count:0, lastDate:null }; }
-  }
-  function saveStreak(){ try{ localStorage.setItem('vocab-streak', JSON.stringify(streak)); }catch(e){} }
-  function registerPracticeToday(){
-    const t = todayStr();
-    if(streak.lastDate === t) return; // already counted today
-    if(streak.lastDate === addDays(t, -1)) streak.count += 1;
-    else streak.count = 1;
-    streak.lastDate = t;
-    saveStreak();
-  }
-
   function showCelebration(msg){
     celebrateEl.textContent = msg;
     celebrateEl.classList.add('show');
     setTimeout(()=>celebrateEl.classList.remove('show'), 1800);
   }
+  function langName(lang){ return lang === 'ro' ? 'Romanian' : 'English'; }
+  function escapeHtml(s){
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+  }
 
-  function loadGhConfig(){
-    try{
-      const raw = localStorage.getItem('vocab-gh-config');
-      if(raw) ghConfig = { ...ghConfig, ...JSON.parse(raw) };
-    }catch(e){}
-    try{
-      const t = sessionStorage.getItem('vocab-gh-token');
-      if(t) ghToken = t;
-    }catch(e){}
+  // ---------- local prefs (theme, lang, streak) stay in localStorage; words live in Supabase ----------
+  function loadTheme(){ try{ return localStorage.getItem('karto-theme') === 'dark'; }catch(e){ return false; } }
+  function saveTheme(isDark){ try{ localStorage.setItem('karto-theme', isDark?'dark':'light'); }catch(e){} }
+  function loadLang(){ try{ return localStorage.getItem('karto-lang') || 'ro'; }catch(e){ return 'ro'; } }
+  function saveLang(l){ try{ localStorage.setItem('karto-lang', l); }catch(e){} }
+  function loadStreak(){
+    try{ const raw = localStorage.getItem('karto-streak'); streak = raw ? JSON.parse(raw) : {count:0,lastDate:null}; }
+    catch(e){ streak = {count:0,lastDate:null}; }
   }
-  function saveGhConfig(){
-    try{ localStorage.setItem('vocab-gh-config', JSON.stringify(ghConfig)); }catch(e){}
+  function saveStreak(){ try{ localStorage.setItem('karto-streak', JSON.stringify(streak)); }catch(e){} }
+  function registerPracticeToday(){
+    const t = todayStr();
+    if(streak.lastDate === t) return;
+    if(streak.lastDate === addDays(t,-1)) streak.count += 1; else streak.count = 1;
+    streak.lastDate = t;
+    saveStreak();
   }
-  function ghConfigured(){ return !!(ghConfig.owner && ghConfig.repo && ghConfig.path && ghToken); }
 
-  // ---------- GITHUB SYNC ----------
-  function utf8ToB64(str){
-    const bytes = new TextEncoder().encode(str);
-    let binary = '';
-    bytes.forEach(b=>binary += String.fromCharCode(b));
-    return btoa(binary);
-  }
-  function b64ToUtf8(b64){
-    const binary = atob(b64.replace(/\n/g,''));
-    const bytes = new Uint8Array(binary.length);
-    for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-    return new TextDecoder().decode(bytes);
-  }
-  function ghApiUrl(){
-    return `https://api.github.com/repos/${ghConfig.owner}/${ghConfig.repo}/contents/${encodeURIComponent(ghConfig.path)}`;
-  }
-  function ghHeaders(){
+  // ---------- Supabase row <-> app word mapping ----------
+  function rowToWord(row){
     return {
-      'Authorization': `Bearer ${ghToken}`,
-      'Accept': 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28'
+      id: row.id, de: row.de, target: row.target, lang: row.lang,
+      note: row.note || '', box: row.box, nextReview: row.next_review,
+      createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr()
     };
-  }
-  async function ghFetchFile(){
-    const res = await fetch(`${ghApiUrl()}?ref=${encodeURIComponent(ghConfig.branch)}`, { headers: ghHeaders() });
-    if(res.status === 404) return { sha: null, words: null };
-    if(!res.ok){
-      const body = await res.text();
-      throw new Error(`GitHub read failed (${res.status}): ${res.status===401||res.status===403 ? 'check your token permissions' : body.slice(0,120)}`);
-    }
-    const data = await res.json();
-    const json = b64ToUtf8(data.content);
-    let remoteWords = [];
-    try{ remoteWords = JSON.parse(json); }catch(e){ remoteWords = []; }
-    return { sha: data.sha, words: remoteWords };
-  }
-  async function ghPushFile(message, retried){
-    const body = {
-      message: message || 'Update vocab.json',
-      content: utf8ToB64(JSON.stringify(words, null, 2)),
-      branch: ghConfig.branch
-    };
-    if(ghSha) body.sha = ghSha;
-    const res = await fetch(ghApiUrl(), { method:'PUT', headers: { ...ghHeaders(), 'Content-Type':'application/json' }, body: JSON.stringify(body) });
-    if(res.status === 409 && !retried){
-      const fresh = await ghFetchFile();
-      ghSha = fresh.sha;
-      return ghPushFile(message, true);
-    }
-    if(!res.ok){
-      const errBody = await res.text();
-      throw new Error(`GitHub save failed (${res.status}): ${res.status===401||res.status===403 ? 'check your token permissions' : errBody.slice(0,120)}`);
-    }
-    const data = await res.json();
-    ghSha = data.content.sha;
-  }
-  function scheduleSync(){
-    saveWordsLocal();
-    if(!ghConfigured()) return;
-    ghStatus = 'pending'; renderSyncBar();
-    clearTimeout(syncTimer);
-    syncTimer = setTimeout(doPush, SYNC_DEBOUNCE_MS);
-  }
-  async function doPush(){
-    ghStatus = 'syncing'; renderSyncBar();
-    try{
-      await ghPushFile('Update vocab via Karto');
-      ghStatus = 'synced'; ghLastSynced = new Date(); ghErrorMsg='';
-    }catch(e){
-      ghStatus = 'error'; ghErrorMsg = e.message;
-    }
-    renderSyncBar();
-  }
-  async function doPull(showMsg){
-    if(!ghConfigured()) return;
-    ghStatus = 'syncing'; renderSyncBar();
-    try{
-      const remote = await ghFetchFile();
-      ghSha = remote.sha;
-      if(remote.words){
-        words = remote.words.map(w=>{
-          const target = w.target !== undefined ? w.target : w.ro;
-          const lang = w.lang || (w.ro !== undefined ? 'ro' : 'ro');
-          return { id:w.id||uid(), de:w.de, target, lang, note:w.note||'', box:w.box||1,
-                   nextReview:w.nextReview||todayStr(), createdAt:w.createdAt||todayStr() };
-        });
-        saveWordsLocal();
-      }
-      ghStatus = 'synced'; ghLastSynced = new Date(); ghErrorMsg='';
-      if(showMsg) showToast('Pulled latest words from GitHub');
-      renderBoxStrip();
-      if(currentTab==='practice'){ session=null; }
-      switchTabSilent();
-    }catch(e){
-      ghStatus = 'error'; ghErrorMsg = e.message;
-      if(showMsg) showToast('Pull failed: ' + e.message);
-    }
-    renderSyncBar();
-  }
-  function switchTabSilent(){
-    if(currentTab === 'practice') renderPractice();
-    else if(currentTab === 'manage') renderManage();
-    else if(currentTab === 'stats') renderStats();
-    else renderHelp();
   }
 
-  function renderSyncBar(){
-    if(!ghConfigured()){
-      syncBarEl.innerHTML = `<span>GitHub sync: not connected — set it up in the Words tab</span>`;
-      return;
-    }
-    let dotClass = 'off', label = '';
-    if(ghStatus==='pending'){ dotClass='pending'; label='Waiting to sync…'; }
-    else if(ghStatus==='syncing'){ dotClass='pending'; label='Syncing…'; }
-    else if(ghStatus==='synced'){ dotClass='synced'; label='Synced' + (ghLastSynced? ' at '+ghLastSynced.toLocaleTimeString() : ''); }
-    else if(ghStatus==='error'){ dotClass='error'; label='Sync error — see Words tab'; }
-    else { dotClass='off'; label='Connected'; }
-    syncBarEl.innerHTML = `<span class="dot ${dotClass}"></span><span>${label}</span>`;
+  async function fetchWords(){
+    dataStatus = 'loading'; renderSyncBar();
+    const { data, error } = await sb.from('words').select('*').order('created_at', {ascending:false});
+    if(error){ dataStatus='error'; renderSyncBar(); showToast('Could not load words: ' + error.message); return; }
+    words = (data || []).map(rowToWord);
+    dataStatus = 'idle'; renderSyncBar();
+  }
+
+  async function insertWord(w){
+    dataStatus = 'saving'; renderSyncBar();
+    const { data, error } = await sb.from('words').insert({
+      user_id: authSession.user.id, de: w.de, target: w.target, lang: w.lang,
+      note: w.note || '', box: w.box, next_review: w.nextReview
+    }).select().single();
+    if(error){ dataStatus='error'; renderSyncBar(); showToast('Save failed: ' + error.message); return null; }
+    dataStatus = 'idle'; renderSyncBar();
+    return rowToWord(data);
+  }
+
+  async function insertWordsBulk(list){
+    dataStatus = 'saving'; renderSyncBar();
+    const rows = list.map(w => ({
+      user_id: authSession.user.id, de: w.de, target: w.target, lang: w.lang,
+      note: '', box: 1, next_review: todayStr()
+    }));
+    const { data, error } = await sb.from('words').insert(rows).select();
+    if(error){ dataStatus='error'; renderSyncBar(); showToast('Bulk add failed: ' + error.message); return []; }
+    dataStatus = 'idle'; renderSyncBar();
+    return (data || []).map(rowToWord);
+  }
+
+  async function updateWordRemote(w){
+    dataStatus = 'saving'; renderSyncBar();
+    const { error } = await sb.from('words').update({ box: w.box, next_review: w.nextReview }).eq('id', w.id);
+    if(error){ dataStatus='error'; renderSyncBar(); showToast('Update failed: ' + error.message); return; }
+    dataStatus = 'idle'; renderSyncBar();
+  }
+
+  async function deleteWordRemote(id){
+    dataStatus = 'saving'; renderSyncBar();
+    const { error } = await sb.from('words').delete().eq('id', id);
+    if(error){ dataStatus='error'; renderSyncBar(); showToast('Delete failed: ' + error.message); return; }
+    dataStatus = 'idle'; renderSyncBar();
   }
 
   function currentWords(){ return words.filter(w => w.lang === currentLang); }
-  function dueWords(){
-    const t = todayStr();
-    return currentWords().filter(w => w.nextReview <= t);
+  function dueWords(){ const t = todayStr(); return currentWords().filter(w => w.nextReview <= t); }
+
+  // ============ AUTH SCREEN ============
+  function renderAuth(){
+    const isSignup = authMode === 'signup';
+    appRoot.innerHTML = `
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <h2>Karto<span style="color:var(--red)">.</span></h2>
+          <p class="sub">${isSignup ? 'Create an account to start your own vocab list' : 'Log in to your vocab list'}</p>
+          <div class="field" style="margin-bottom:10px;"><label>Email</label><input type="email" id="authEmail" placeholder="you@example.com"></div>
+          <div class="field" style="margin-bottom:10px;"><label>Password</label><input type="password" id="authPassword" placeholder="At least 6 characters"></div>
+          <button class="btn full" id="authSubmit" ${authBusy?'disabled':''}>${authBusy ? 'Please wait…' : (isSignup ? 'Sign up' : 'Log in')}</button>
+          ${authError ? `<div class="auth-error">${escapeHtml(authError)}</div>` : ''}
+          <div class="auth-switch">
+            ${isSignup ? `Already have an account? <button id="authSwitch">Log in</button>` : `New here? <button id="authSwitch">Create an account</button>`}
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('authSwitch').onclick = ()=>{ authMode = isSignup ? 'login' : 'signup'; authError=''; renderAuth(); };
+    document.getElementById('authSubmit').onclick = async ()=>{
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      if(!email || password.length < 6){ authError = 'Enter a valid email and a password of at least 6 characters.'; renderAuth(); return; }
+      authBusy = true; authError=''; renderAuth();
+      let result;
+      if(isSignup) result = await sb.auth.signUp({ email, password });
+      else result = await sb.auth.signInWithPassword({ email, password });
+      authBusy = false;
+      if(result.error){ authError = result.error.message; renderAuth(); return; }
+      if(isSignup && result.data.user && !result.data.session){
+        authError = ''; 
+        appRoot.innerHTML = `<div class="auth-wrap"><div class="auth-card"><h2>Check your email</h2><p class="sub">We sent a confirmation link to ${escapeHtml(email)}. Click it, then come back and log in.</p><button class="btn full" id="backToLogin">Back to login</button></div></div>`;
+        document.getElementById('backToLogin').onclick = ()=>{ authMode='login'; renderAuth(); };
+        return;
+      }
+      authSession = result.data.session;
+      await boot();
+    };
   }
 
-  function updateLangUI(){
+  // ============ MAIN APP SHELL ============
+  function renderShell(){
+    appRoot.innerHTML = `
+      <header class="top">
+        <div class="brand">
+          <div class="stamp">Karto<span>.</span></div>
+          <button id="langToggle" title="Switch language pair"></button>
+        </div>
+        <div class="header-right">
+          <nav class="tabs">
+            <button data-tab="practice" class="active">Practice</button>
+            <button data-tab="manage">Words</button>
+            <button data-tab="stats">Stats</button>
+            <button data-tab="help">Help</button>
+          </nav>
+          <button id="themeToggle" title="Toggle dark mode">◐</button>
+          <button id="signOutBtn" title="Sign out">Sign out</button>
+        </div>
+      </header>
+      <div class="syncbar" id="syncBar"></div>
+      <div class="boxes" id="boxStrip"></div>
+      <div id="view"></div>
+      <footer>Karto · Leitner system</footer>
+    `;
+    const langToggleBtn = document.getElementById('langToggle');
     langToggleBtn.textContent = `German → ${langName(currentLang)}`;
-    langToggleBtn.title = `Switch to German → ${langName(currentLang === 'ro' ? 'en' : 'ro')}`;
+    langToggleBtn.onclick = ()=>{
+      currentLang = currentLang === 'ro' ? 'en' : 'ro';
+      saveLang(currentLang);
+      session = null;
+      langToggleBtn.textContent = `German → ${langName(currentLang)}`;
+      renderBoxStrip();
+      switchTab(currentTab);
+    };
+    document.getElementById('themeToggle').onclick = ()=>{
+      const isDark = document.body.classList.toggle('dark');
+      saveTheme(isDark);
+    };
+    document.getElementById('signOutBtn').onclick = async ()=>{
+      await sb.auth.signOut();
+      authSession = null; words = [];
+      renderAuth();
+    };
+    document.querySelectorAll('nav.tabs button[data-tab]').forEach(b=>{
+      b.addEventListener('click', ()=>switchTab(b.dataset.tab));
+    });
+    renderBoxStrip();
+    renderSyncBar();
+    switchTab('practice');
+  }
+
+  function renderSyncBar(){
+    const el = document.getElementById('syncBar');
+    if(!el) return;
+    let dotClass='synced', label='Up to date';
+    if(dataStatus==='loading'){ dotClass='pending'; label='Loading your words…'; }
+    else if(dataStatus==='saving'){ dotClass='pending'; label='Saving…'; }
+    else if(dataStatus==='error'){ dotClass='error'; label='Sync error'; }
+    el.innerHTML = `<span class="dot ${dotClass}"></span><span>${label}</span>`;
   }
 
   function renderBoxStrip(){
+    const el = document.getElementById('boxStrip');
+    if(!el) return;
     let html = '';
     const cw = currentWords();
-    for(let b=1; b<=5; b++){
+    for(let b=1;b<=5;b++){
       const count = cw.filter(w=>w.box===b).length;
       html += `<div class="box" data-box="${b}"><div class="n">${count}</div><div class="l">Box ${b}</div></div>`;
     }
-    boxStripEl.innerHTML = html;
+    el.innerHTML = html;
   }
 
-  // ---------- PRACTICE ----------
+  function switchTab(tab){
+    currentTab = tab;
+    document.querySelectorAll('nav.tabs button[data-tab]').forEach(b=>{
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    if(tab === 'practice') renderPractice();
+    else if(tab === 'manage') renderManage();
+    else if(tab === 'stats') renderStats();
+    else renderHelp();
+  }
+
+  // ============ PRACTICE ============
   function buildSession(force){
     let pool = force ? currentWords().slice() : dueWords();
     if(pool.length === 0){ session = null; return; }
     pool.sort((a,b)=> a.nextReview.localeCompare(b.nextReview));
     pool = pool.slice(0, SESSION_SIZE);
-    const cards = pool.map(w => ({
-      wordId: w.id,
-      direction: Math.random() < 0.5 ? 'de2target' : 'target2de'
-    }));
-    for(let i=cards.length-1;i>0;i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [cards[i],cards[j]] = [cards[j],cards[i]];
-    }
+    const cards = pool.map(w => ({ wordId: w.id, direction: Math.random()<0.5 ? 'de2target':'target2de' }));
+    for(let i=cards.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [cards[i],cards[j]]=[cards[j],cards[i]]; }
     session = { cards, idx:0, results:{again:0,good:0,easy:0} };
   }
-
   function wordById(id){ return words.find(w=>w.id===id); }
 
   function renderPractice(){
+    const viewEl = document.getElementById('view');
     if(!session) buildSession(false);
     if(!session){
       const total = currentWords().length;
       viewEl.innerHTML = total === 0 ? `
-        <div class="empty">
-          <h2>No words yet</h2>
-          <p>Add your first German–${langName(currentLang)} word in the "Words" tab.</p>
-          <button class="btn" id="goManage">Add a word</button>
-        </div>` : `
-        <div class="empty">
-          <h2>Nothing due today</h2>
-          <p>All ${total} words aren't due for review yet. You can still run a free practice round.</p>
-          <button class="btn" id="forcePractice">Practice anyway</button>
-        </div>`;
-      const gm = document.getElementById('goManage');
-      if(gm) gm.onclick = ()=>switchTab('manage');
-      const fp = document.getElementById('forcePractice');
-      if(fp) fp.onclick = ()=>{ buildSession(true); renderPractice(); };
+        <div class="empty"><h2>No words yet</h2>
+        <p>Add your first German–${langName(currentLang)} word in the "Words" tab.</p>
+        <button class="btn" id="goManage">Add a word</button></div>` : `
+        <div class="empty"><h2>Nothing due today</h2>
+        <p>All ${total} words aren't due for review yet. You can still run a free practice round.</p>
+        <button class="btn" id="forcePractice">Practice anyway</button></div>`;
+      const gm = document.getElementById('goManage'); if(gm) gm.onclick=()=>switchTab('manage');
+      const fp = document.getElementById('forcePractice'); if(fp) fp.onclick=()=>{ buildSession(true); renderPractice(); };
       return;
     }
-
     if(session.idx >= session.cards.length){
       const r = session.results;
-      viewEl.innerHTML = `
-        <div class="summary">
-          <h2>Round complete</h2>
-          <p><strong>${r.again}</strong> Again · <strong>${r.good}</strong> Good · <strong>${r.easy}</strong> Easy</p>
-          <button class="btn" id="newRound">New round</button>
-        </div>`;
+      viewEl.innerHTML = `<div class="summary"><h2>Round complete</h2>
+        <p><strong>${r.again}</strong> Again · <strong>${r.good}</strong> Good · <strong>${r.easy}</strong> Easy</p>
+        <button class="btn" id="newRound">New round</button></div>`;
       document.getElementById('newRound').onclick = ()=>{ session=null; renderPractice(); };
       return;
     }
-
     const c = session.cards[session.idx];
     const w = wordById(c.wordId);
     if(!w){ session.idx++; renderPractice(); return; }
-    const front = c.direction === 'de2target' ? w.de : w.target;
-    const back = c.direction === 'de2target' ? w.target : w.de;
-    const dirLabel = c.direction === 'de2target' ? `DE → ${langCode(w.lang)}` : `${langCode(w.lang)} → DE`;
-
+    const front = c.direction==='de2target' ? w.de : w.target;
+    const back = c.direction==='de2target' ? w.target : w.de;
+    const dirLabel = c.direction==='de2target' ? `DE → ${w.lang.toUpperCase()}` : `${w.lang.toUpperCase()} → DE`;
     viewEl.innerHTML = `
       <div class="practice-meta">
         <span>Card ${session.idx+1} / ${session.cards.length}</span>
@@ -626,42 +589,30 @@
       </div>
       <div class="scene">
         <div class="card" id="flipCard">
-          <div class="face front">
-            <div class="direction-tag">${dirLabel}</div>
+          <div class="face front"><div class="direction-tag">${dirLabel}</div>
             <div class="word-main">${escapeHtml(front)}</div>
-            <div class="hint">Tap or press Space to flip</div>
-          </div>
-          <div class="face back">
-            <div class="direction-tag">${dirLabel}</div>
+            <div class="hint">Tap or press Space to flip</div></div>
+          <div class="face back"><div class="direction-tag">${dirLabel}</div>
             <div class="word-main">${escapeHtml(back)}</div>
-            ${w.note ? `<div class="word-note">${escapeHtml(w.note)}</div>` : ''}
-          </div>
+            ${w.note ? `<div class="word-note">${escapeHtml(w.note)}</div>` : ''}</div>
         </div>
       </div>
       <div class="rate-row">
         <button class="again" id="rateAgain" disabled>Again<small>Box 1</small></button>
         <button class="good" id="rateGood" disabled>Good<small>+1 box</small></button>
         <button class="easy" id="rateEasy" disabled>Easy<small>+2 boxes</small></button>
-      </div>
-    `;
-
+      </div>`;
     const cardEl = document.getElementById('flipCard');
-    const btnAgain = document.getElementById('rateAgain');
-    const btnGood = document.getElementById('rateGood');
-    const btnEasy = document.getElementById('rateEasy');
-
-    function doFlip(){
-      cardEl.classList.add('flipped');
-      btnAgain.disabled = false; btnGood.disabled = false; btnEasy.disabled = false;
-    }
+    const btnAgain=document.getElementById('rateAgain'), btnGood=document.getElementById('rateGood'), btnEasy=document.getElementById('rateEasy');
+    function doFlip(){ cardEl.classList.add('flipped'); btnAgain.disabled=false; btnGood.disabled=false; btnEasy.disabled=false; }
     cardEl.onclick = doFlip;
     document.onkeydown = (e)=>{
       if(currentTab !== 'practice') return;
-      if(e.code === 'Space'){ e.preventDefault(); if(!cardEl.classList.contains('flipped')) doFlip(); }
+      if(e.code==='Space'){ e.preventDefault(); if(!cardEl.classList.contains('flipped')) doFlip(); }
       if(cardEl.classList.contains('flipped')){
-        if(e.key === '1') btnAgain.click();
-        if(e.key === '2') btnGood.click();
-        if(e.key === '3') btnEasy.click();
+        if(e.key==='1') btnAgain.click();
+        if(e.key==='2') btnGood.click();
+        if(e.key==='3') btnEasy.click();
       }
     };
     btnAgain.onclick = ()=>rate(w,'again');
@@ -669,396 +620,146 @@
     btnEasy.onclick = ()=>rate(w,'easy');
   }
 
-  function rate(w, kind){
+  async function rate(w, kind){
     const t = todayStr();
     const wasBox = w.box;
-    if(kind==='again'){
-      w.box = 1;
-      w.nextReview = addDays(t, INTERVALS[1]);
-      session.results.again++;
-    } else if(kind==='good'){
-      w.box = Math.min(w.box+1, 5);
-      w.nextReview = addDays(t, INTERVALS[w.box]);
-      session.results.good++;
-    } else {
-      w.box = Math.min(w.box+2, 5);
-      w.nextReview = addDays(t, INTERVALS[w.box]);
-      session.results.easy++;
-    }
+    if(kind==='again'){ w.box=1; w.nextReview=addDays(t,INTERVALS[1]); session.results.again++; }
+    else if(kind==='good'){ w.box=Math.min(w.box+1,5); w.nextReview=addDays(t,INTERVALS[w.box]); session.results.good++; }
+    else { w.box=Math.min(w.box+2,5); w.nextReview=addDays(t,INTERVALS[w.box]); session.results.easy++; }
     registerPracticeToday();
-    if(w.box === 5 && wasBox !== 5) showCelebration(`"${w.de}" mastered — Box 5 ✓`);
-    scheduleSync();
+    if(w.box===5 && wasBox!==5) showCelebration(`"${w.de}" mastered — Box 5 ✓`);
     session.idx++;
     renderBoxStrip();
     renderPractice();
+    await updateWordRemote(w);
   }
 
-  // ---------- MANAGE ----------
+  // ============ MANAGE ============
   function renderManage(){
+    const viewEl = document.getElementById('view');
     const tName = langName(currentLang);
     viewEl.innerHTML = `
-      <div class="panel">
-        <h3>GitHub Sync <span class="tag">${ghConfigured() ? 'connected' : 'not connected'}</span></h3>
-        <p style="font-size:0.82rem; color:var(--muted); line-height:1.5; margin-top:-4px;">
-          Connect a repo once and your words save there automatically — open the same repo on another device to get the same list.
-        </p>
-        <div class="row">
-          <div class="field"><label>Owner</label><input type="text" id="ghOwner" placeholder="your-username" value="${escapeAttr(ghConfig.owner)}"></div>
-          <div class="field"><label>Repo</label><input type="text" id="ghRepo" placeholder="repo-name" value="${escapeAttr(ghConfig.repo)}"></div>
-        </div>
-        <div class="row">
-          <div class="field"><label>File path</label><input type="text" id="ghPath" placeholder="vocab.json" value="${escapeAttr(ghConfig.path)}"></div>
-          <div class="field"><label>Branch</label><input type="text" id="ghBranch" placeholder="main" value="${escapeAttr(ghConfig.branch)}"></div>
-        </div>
-        <div class="row">
-          <div class="field"><label>Personal access token</label><input type="password" id="ghToken" placeholder="${ghToken ? '•••••••• (already entered)' : 'fine-grained token, contents: read & write'}"></div>
-        </div>
-        <label class="checkrow"><input type="checkbox" id="ghRemember"> Remember token for this browser tab (cleared when you close it)</label>
-        <div class="row">
-          <button class="btn" id="ghConnectBtn">Connect &amp; sync now</button>
-          ${ghConfigured() ? `<button class="btn secondary" id="ghDisconnectBtn">Disconnect</button>` : ''}
-        </div>
-        <div class="gh-status-line" id="ghStatusLine"></div>
-      </div>
-
       <div class="panel">
         <h3>New word (German → ${tName})</h3>
         <div class="row">
           <div class="field"><label>German</label><input type="text" id="inDe" placeholder="e.g. die Nachhaltigkeit"></div>
           <div class="field"><label>${tName}</label><input type="text" id="inTarget" placeholder="translation"></div>
         </div>
-        <div class="row">
-          <div class="field"><label>Note (optional)</label><input type="text" id="inNote" placeholder="example sentence or context"></div>
-        </div>
+        <div class="row"><div class="field"><label>Note (optional)</label><input type="text" id="inNote" placeholder="example sentence or context"></div></div>
         <button class="btn" id="addWordBtn">Add word</button>
       </div>
-
       <div class="panel">
         <h3>Add several at once</h3>
         <textarea id="bulkInput" placeholder="one word per line, e.g.:&#10;die Nachhaltigkeit - sustainability&#10;der Umweltschutz - environmental protection"></textarea>
-        <div class="row" style="margin-top:8px;">
-          <button class="btn secondary" id="bulkAddBtn">Add all</button>
-        </div>
+        <div class="row" style="margin-top:8px;"><button class="btn secondary" id="bulkAddBtn">Add all</button></div>
       </div>
-
       <div class="panel">
         <h3>Word list (${tName})</h3>
         <div class="count-line">${currentWords().length} words in this pair</div>
         <div class="wordlist" id="wordlist"></div>
-        <div class="filecontrols" style="margin-top:14px;">
-          <button class="btn secondary" id="saveBtn">Download backup</button>
-          <label class="btn secondary" for="importFile" style="cursor:pointer;">Load from file</label>
-          <input type="file" id="importFile" accept="application/json">
-          ${fsApiSupported ? `<button class="btn ghost" id="linkFileBtn">${linkedHandle ? 'Linked: '+escapeHtml(linkedHandle.name) : 'Link a local file…'}</button>` : ''}
-        </div>
       </div>
     `;
     renderWordList();
-    renderGhStatusLine();
-
-    document.getElementById('ghConnectBtn').onclick = async ()=>{
-      ghConfig.owner = document.getElementById('ghOwner').value.trim();
-      ghConfig.repo = document.getElementById('ghRepo').value.trim();
-      ghConfig.path = document.getElementById('ghPath').value.trim() || 'vocab.json';
-      ghConfig.branch = document.getElementById('ghBranch').value.trim() || 'main';
-      const tokenInput = document.getElementById('ghToken').value.trim();
-      if(tokenInput) ghToken = tokenInput;
-      const remember = document.getElementById('ghRemember').checked;
-      if(!ghConfig.owner || !ghConfig.repo || !ghToken){
-        showToast('Owner, repo, and token are required');
-        return;
-      }
-      saveGhConfig();
-      if(remember){ try{ sessionStorage.setItem('vocab-gh-token', ghToken); }catch(e){} }
-      await doPull(true);
-      renderManage();
-    };
-
-    const disconnectBtn = document.getElementById('ghDisconnectBtn');
-    if(disconnectBtn){
-      disconnectBtn.onclick = ()=>{
-        ghToken=''; ghSha=null; ghStatus='off';
-        try{ sessionStorage.removeItem('vocab-gh-token'); }catch(e){}
-        renderManage(); renderSyncBar();
-        showToast('Disconnected from GitHub');
-      };
-    }
-
-    document.getElementById('addWordBtn').onclick = ()=>{
+    document.getElementById('addWordBtn').onclick = async ()=>{
       const de = document.getElementById('inDe').value.trim();
       const target = document.getElementById('inTarget').value.trim();
       const note = document.getElementById('inNote').value.trim();
       if(!de || !target){ showToast(`Please fill in German and ${tName}`); return; }
-      words.push({ id: uid(), de, target, lang: currentLang, note, box:1, nextReview: todayStr(), createdAt: todayStr() });
-      scheduleSync();
-      renderBoxStrip();
-      renderManage();
-      showToast(ghConfigured() ? 'Word added — syncing to GitHub…' : 'Word saved');
+      const newW = await insertWord({ de, target, lang: currentLang, note, box:1, nextReview: todayStr() });
+      if(newW){ words.unshift(newW); renderBoxStrip(); renderManage(); showToast('Word saved'); }
     };
-
-    document.getElementById('bulkAddBtn').onclick = ()=>{
+    document.getElementById('bulkAddBtn').onclick = async ()=>{
       const raw = document.getElementById('bulkInput').value;
       const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
-      let added = 0;
+      const toAdd = [];
       lines.forEach(line=>{
         const parts = line.split(/\s-\s|\t|;/);
-        if(parts.length >= 2){
-          const de = parts[0].trim();
-          const target = parts[1].trim();
-          if(de && target){
-            words.push({ id: uid(), de, target, lang: currentLang, note:'', box:1, nextReview: todayStr(), createdAt: todayStr() });
-            added++;
-          }
-        }
+        if(parts.length>=2){ const de=parts[0].trim(), target=parts[1].trim(); if(de && target) toAdd.push({de,target,lang:currentLang}); }
       });
-      if(added>0){ scheduleSync(); renderBoxStrip(); renderManage(); showToast(`${added} words added${ghConfigured() ? ' — syncing…' : ''}`); }
-      else showToast('No valid lines found (word - translation)');
+      if(toAdd.length===0){ showToast('No valid lines found (word - translation)'); return; }
+      const added = await insertWordsBulk(toAdd);
+      words = [...added, ...words];
+      renderBoxStrip(); renderManage();
+      showToast(`${added.length} words added`);
     };
-
-    document.getElementById('saveBtn').onclick = async ()=>{
-      if(linkedHandle){
-        try{
-          const writable = await linkedHandle.createWritable();
-          await writable.write(JSON.stringify(words, null, 2));
-          await writable.close();
-          showToast('Saved to linked file');
-          return;
-        }catch(e){ showToast('Could not write to linked file — downloading instead'); }
-      }
-      downloadJSON();
-    };
-
-    function downloadJSON(){
-      const blob = new Blob([JSON.stringify(words, null, 2)], {type:'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'vocab.json';
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Downloaded vocab.json');
-    }
-
-    const linkBtn = document.getElementById('linkFileBtn');
-    if(linkBtn){
-      linkBtn.onclick = async ()=>{
-        try{
-          linkedHandle = await window.showSaveFilePicker({
-            suggestedName: 'vocab.json',
-            types: [{ description:'JSON file', accept:{'application/json':['.json']} }]
-          });
-          renderManage();
-          showToast('File linked — "Download backup" will now write here instead');
-        }catch(e){ /* user cancelled */ }
-      };
-    }
-
-    document.getElementById('importFile').onchange = (e)=>{
-      const file = e.target.files[0];
-      if(!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        try{
-          const imported = JSON.parse(reader.result);
-          if(Array.isArray(imported)){
-            imported.forEach(w=>{
-              const target = w.target !== undefined ? w.target : w.ro;
-              const lang = w.lang || (w.ro !== undefined ? 'ro' : currentLang);
-              if(w.de && target){
-                words.push({
-                  id: w.id || uid(), de:w.de, target, lang, note:w.note||'',
-                  box: w.box||1, nextReview: w.nextReview||todayStr(),
-                  createdAt: w.createdAt||todayStr()
-                });
-              }
-            });
-            scheduleSync(); renderBoxStrip(); renderManage();
-            showToast('Loaded successfully');
-          }
-        }catch(err){ showToast('Invalid JSON file'); }
-      };
-      reader.readAsText(file);
-    };
-  }
-
-  function renderGhStatusLine(){
-    const el = document.getElementById('ghStatusLine');
-    if(!el) return;
-    if(!ghConfigured()){ el.innerHTML = ''; return; }
-    let dotClass='off', label='Connected';
-    if(ghStatus==='pending'){ dotClass='pending'; label='Waiting to sync…'; }
-    else if(ghStatus==='syncing'){ dotClass='pending'; label='Syncing…'; }
-    else if(ghStatus==='synced'){ dotClass='synced'; label='Synced' + (ghLastSynced? ' at '+ghLastSynced.toLocaleTimeString() : ''); }
-    else if(ghStatus==='error'){ dotClass='error'; label=ghErrorMsg || 'Sync error'; }
-    el.innerHTML = `<span class="dot ${dotClass}"></span><span>${escapeHtml(label)}</span>`;
   }
 
   function renderWordList(){
     const listEl = document.getElementById('wordlist');
     const cw = currentWords();
-    if(cw.length === 0){
-      listEl.innerHTML = '<div class="count-line">No words saved yet for this pair.</div>';
-      return;
-    }
-    const sorted = cw.slice().sort((a,b)=> (b.createdAt||'').localeCompare(a.createdAt||''));
-    listEl.innerHTML = sorted.map(w => `
+    if(cw.length===0){ listEl.innerHTML = '<div class="count-line">No words saved yet for this pair.</div>'; return; }
+    const sorted = cw.slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    listEl.innerHTML = sorted.map(w=>`
       <div class="wordrow">
         <div class="de">${escapeHtml(w.de)}</div>
         <div class="target">${escapeHtml(w.target)}</div>
         <div class="meta">Box ${w.box}</div>
         <button data-id="${w.id}" class="delBtn">delete</button>
-      </div>
-    `).join('');
+      </div>`).join('');
     listEl.querySelectorAll('.delBtn').forEach(btn=>{
-      btn.onclick = ()=>{
-        words = words.filter(w=>w.id !== btn.dataset.id);
-        scheduleSync(); renderBoxStrip(); renderManage();
+      btn.onclick = async ()=>{
+        const id = btn.dataset.id;
+        words = words.filter(w=>w.id!==id);
+        renderBoxStrip(); renderManage();
+        await deleteWordRemote(id);
       };
     });
   }
 
-  // ---------- STATS ----------
+  // ============ STATS ============
   function renderStats(){
+    const viewEl = document.getElementById('view');
     const cw = currentWords();
-    const total = cw.length;
-    const due = dueWords().length;
-    const mastered = cw.filter(w=>w.box===5).length;
-    const newToday = cw.filter(w=>w.createdAt === todayStr()).length;
+    const total = cw.length, due = dueWords().length, mastered = cw.filter(w=>w.box===5).length;
+    const newToday = cw.filter(w=>w.createdAt===todayStr()).length;
     viewEl.innerHTML = `
       <div class="statgrid">
-        <div class="stat"><div class="big">${total}</div><div class="lbl">Words (${langCode(currentLang)})</div></div>
+        <div class="stat"><div class="big">${total}</div><div class="lbl">Words (${currentLang.toUpperCase()})</div></div>
         <div class="stat"><div class="big">${due}</div><div class="lbl">Due today</div></div>
         <div class="stat"><div class="big">${mastered}</div><div class="lbl">Mastered (Box 5)</div></div>
         <div class="stat"><div class="big">${newToday}</div><div class="lbl">Added today</div></div>
-      </div>
-    `;
+      </div>`;
   }
 
-  // ---------- HELP ----------
+  // ============ HELP ============
   function renderHelp(){
+    const viewEl = document.getElementById('view');
     viewEl.innerHTML = `
-      <div class="panel">
-        <h3>How it works</h3>
-        <div class="help-step">
-          <div class="num">1</div>
-          <div><h4>Collect words</h4>
-          <p>Whenever you come across a new word while reading, add it in the "Words" tab — one at a time, or several at once by pasting a list.</p></div>
-        </div>
-        <div class="help-step">
-          <div class="num">2</div>
-          <div><h4>Practice with the 5 boxes</h4>
-          <p>Every word starts in Box 1. Answer correctly and it moves up a box, so it's tested less often. Get it wrong and it drops back to Box 1, due again tomorrow. This way you automatically spend more time on what you don't know yet.</p></div>
-        </div>
-        <div class="help-step">
-          <div class="num">3</div>
-          <div><h4>Short daily rounds</h4>
-          <p>A round is 10–15 due cards — a few minutes is enough.</p></div>
-        </div>
+      <div class="panel"><h3>How it works</h3>
+        <div class="help-step"><div class="num">1</div><div><h4>Collect words</h4>
+        <p>Whenever you come across a new word while reading, add it in the "Words" tab — one at a time, or several at once by pasting a list.</p></div></div>
+        <div class="help-step"><div class="num">2</div><div><h4>Practice with the 5 boxes</h4>
+        <p>Every word starts in Box 1. Answer correctly and it moves up a box, so it's tested less often. Get it wrong and it drops back to Box 1, due again tomorrow.</p></div></div>
+        <div class="help-step"><div class="num">3</div><div><h4>Short daily rounds</h4>
+        <p>A round is 10–15 due cards — a few minutes is enough.</p></div></div>
       </div>
-
-      <div class="panel">
-        <h3>Syncing across devices (GitHub)</h3>
+      <div class="panel"><h3>Your account</h3>
         <p style="font-size:0.85rem; color:var(--muted); line-height:1.5;">
-          In the Words tab, fill in your GitHub username, repo name, and a personal access token (fine-grained, scoped to just that repo, with "Contents: read and write" permission), then click <strong>Connect &amp; sync now</strong>. From then on, adding, editing, or reviewing a word automatically commits the updated <code>vocab.json</code> to that repo after a couple of seconds. Open the same repo details on another device — same words, same progress.
-        </p>
-        <div class="help-note">
-          Your token is never written into the page or the repo. By default it only lives in memory and you'll re-enter it each time you reopen the app; ticking "Remember token" keeps it in this browser tab's session storage instead, cleared when you close the tab.
-        </div>
-      </div>
-
-      <div class="panel">
-        <h3>Backup without GitHub</h3>
-        <p style="font-size:0.85rem; color:var(--muted); line-height:1.5;">
-          Even without GitHub sync, everything also saves automatically in this browser. "Download backup" in the Words tab gives you a portable <code>vocab.json</code> any time, and "Load from file" brings words back in (added to your list, nothing overwritten).
-        </p>
-      </div>
-
-      <div class="panel">
-        <h3>Self-hosting</h3>
-        <p style="font-size:0.85rem; color:var(--muted); line-height:1.5;">
-          This page is a single HTML file with no server or dependencies — upload it as-is to GitHub Pages, Netlify, or any static host. GitHub sync works the same way once hosted, since it talks to GitHub's API directly from your browser.
+          Your words are tied to your Karto account and stored securely — only you can see or edit them, even though everyone shares the same app. Log in with the same account on any device to get the same list.
         </p>
       </div>
     `;
   }
 
-  function escapeHtml(s){
-    const d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
-  }
-  function escapeAttr(s){ return escapeHtml(s||''); }
-
-  function switchTab(tab){
-    currentTab = tab;
-    document.querySelectorAll('nav.tabs button[data-tab]').forEach(b=>{
-      b.classList.toggle('active', b.dataset.tab === tab);
-    });
-    switchTabSilent();
-  }
-
-  document.querySelectorAll('nav.tabs button[data-tab]').forEach(b=>{
-    b.addEventListener('click', ()=>switchTab(b.dataset.tab));
-  });
-
-  document.getElementById('themeToggle').addEventListener('click', ()=>{
-    const isDark = document.body.classList.toggle('dark');
-    saveTheme(isDark);
-  });
-
-  langToggleBtn.addEventListener('click', ()=>{
-    currentLang = currentLang === 'ro' ? 'en' : 'ro';
-    saveLang(currentLang);
-    session = null;
-    updateLangUI();
-    renderBoxStrip();
-    switchTab(currentTab);
-  });
-
-  let fabOpen = false;
-  function closeFab(){
-    fabOpen = false;
-    const p = document.getElementById('fabPanel');
-    if(p) p.remove();
-  }
-  fabBtn.addEventListener('click', ()=>{
-    if(fabOpen){ closeFab(); return; }
-    fabOpen = true;
-    const tName = langName(currentLang);
-    const panel = document.createElement('div');
-    panel.className = 'fab-panel';
-    panel.id = 'fabPanel';
-    panel.innerHTML = `
-      <h4>Quick add (${tName})</h4>
-      <div class="row"><input type="text" id="fabDe" placeholder="German"></div>
-      <div class="row"><input type="text" id="fabTarget" placeholder="${tName}"></div>
-      <button class="btn" id="fabSave">Add</button>
-    `;
-    document.body.appendChild(panel);
-    document.getElementById('fabDe').focus();
-    document.getElementById('fabSave').onclick = ()=>{
-      const de = document.getElementById('fabDe').value.trim();
-      const target = document.getElementById('fabTarget').value.trim();
-      if(!de || !target){ showToast(`Please fill in German and ${tName}`); return; }
-      words.push({ id: uid(), de, target, lang: currentLang, note:'', box:1, nextReview: todayStr(), createdAt: todayStr() });
-      scheduleSync();
-      renderBoxStrip();
-      if(currentTab==='manage') renderManage();
-      showToast('Word added');
-      closeFab();
-    };
-  });
-
-  (async function init(){
+  // ============ BOOT ============
+  async function boot(){
     if(loadTheme()) document.body.classList.add('dark');
     currentLang = loadLang();
-    updateLangUI();
-    loadWordsLocal();
-    loadGhConfig();
     loadStreak();
+    renderShell();
+    await fetchWords();
     renderBoxStrip();
-    renderSyncBar();
-    switchTab('practice');
-    if(ghConfigured()) await doPull(false);
+    switchTab(currentTab);
+  }
+
+  (async function init(){
+    const { data } = await sb.auth.getSession();
+    authSession = data.session;
+    if(authSession){ await boot(); }
+    else { renderAuth(); }
+    sb.auth.onAuthStateChange((event, sess)=>{
+      if(event === 'SIGNED_OUT'){ authSession=null; words=[]; renderAuth(); }
+    });
   })();
 })();
 </script>
