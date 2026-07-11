@@ -460,6 +460,11 @@
     dataStatus = 'idle'; renderSyncBar();
   }
 
+  async function deleteAllUserData(){
+    const { error } = await sb.from('words').delete().eq('user_id', authSession.user.id);
+    return error;
+  }
+
   function currentWords(){ return words.filter(w => w.lang === currentLang); }
   function dueWords(){ const t = todayStr(); return currentWords().filter(w => w.nextReview <= t); }
 
@@ -546,7 +551,7 @@
       <div class="syncbar" id="syncBar"></div>
       <div class="boxes" id="boxStrip"></div>
       <div id="view"></div>
-      <footer>Karto · Leitner system</footer>
+      <footer>Karto · Leitner system · <a href="./privacy.html" style="color:var(--muted);">Privacy</a> · <a href="./terms.html" style="color:var(--muted);">Terms</a></footer>
     `;
     const langToggleBtn = document.getElementById('langToggle');
     langToggleBtn.textContent = `German → ${langName(currentLang)}`;
@@ -727,8 +732,27 @@
         <div class="count-line">${currentWords().length} words in this pair</div>
         <div class="wordlist" id="wordlist"></div>
       </div>
+
+      <div class="panel">
+        <h3>Delete account</h3>
+        <p style="font-size:0.85rem; color:var(--muted); line-height:1.5;">
+          This permanently deletes your account and every word you've saved, in both language pairs. This can't be undone.
+        </p>
+        <button class="btn danger" id="deleteAccountBtn">Delete my account</button>
+      </div>
     `;
     renderWordList();
+    document.getElementById('deleteAccountBtn').onclick = async ()=>{
+      if(!confirm('Delete your account and all saved words permanently? This cannot be undone.')) return;
+      const btn = document.getElementById('deleteAccountBtn');
+      btn.disabled = true; btn.textContent = 'Deleting…';
+      const { error } = await sb.rpc('delete_user');
+      if(error){ showToast('Delete failed: ' + error.message); btn.disabled=false; btn.textContent='Delete my account'; return; }
+      await sb.auth.signOut();
+      authSession = null; words = [];
+      renderAuth();
+      showToast('Your account has been deleted.');
+    };
     document.getElementById('addWordBtn').onclick = async ()=>{
       const de = document.getElementById('inDe').value.trim();
       const target = document.getElementById('inTarget').value.trim();
