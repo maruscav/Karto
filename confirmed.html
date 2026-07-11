@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karto — Email confirmed</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --paper:#F5F5F7; --ink:#1D1D1F; --muted:#86868B; --blue:#0071E3; --teal:#34C759;
+    --line:#D2D2D7; --card:#FFFFFF;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 10px 30px rgba(0,0,0,0.10);
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:var(--paper); color:var(--ink); font-family:var(--font); padding:24px;
+  }
+  .card{
+    max-width:380px; width:100%; background:var(--card); border:1px solid var(--line);
+    border-radius:20px; box-shadow:var(--shadow); padding:36px 28px; text-align:center;
+  }
+  .icon{
+    width:56px; height:56px; border-radius:50%; background:var(--teal); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-size:1.6rem;
+    margin:0 auto 18px;
+  }
+  h1{ font-size:1.3rem; font-weight:700; letter-spacing:-0.01em; margin:0 0 8px; }
+  p{ color:var(--muted); font-size:0.9rem; line-height:1.5; margin:0 0 22px; }
+  a.btn{
+    display:inline-block; background:var(--blue); color:#fff; text-decoration:none;
+    font-weight:600; font-size:0.9rem; padding:11px 22px; border-radius:980px;
+  }
+  .stamp{ font-weight:700; }
+  .stamp span{ color:#FF3B30; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon" id="icon">✓</div>
+    <h1 id="title">Email confirmed</h1>
+    <p id="message">Loading…</p>
+    <a class="btn" id="continueBtn" href="./">Continue to Karto</a>
+  </div>
+
+<script>
+(function(){
+  const SUPABASE_URL = 'https://ukrzdiwlpjhbxesgwarh.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_Vw4Jbd3rvrWZKvszLzhdGQ_RuAXhd4J';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const titleEl = document.getElementById('title');
+  const msgEl = document.getElementById('message');
+  const iconEl = document.getElementById('icon');
+
+  (async function(){
+    const { data, error } = await sb.auth.getSession();
+
+    // Strip the token out of the address bar immediately, regardless of outcome
+    if(window.location.hash && window.location.hash.includes('access_token')){
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    }
+
+    if(error || !data.session){
+      titleEl.textContent = 'Confirmation link expired';
+      msgEl.textContent = 'This link may have already been used or timed out. Just log in directly with your email and password instead.';
+      iconEl.textContent = '!';
+      iconEl.style.background = '#FF9500';
+      return;
+    }
+    titleEl.textContent = 'Email confirmed';
+    msgEl.textContent = "You're all set and already logged in. Continue on to your vocab list.";
+  })();
+})();
+</script>
+</body>
+</html>
