@@ -3,46 +3,295 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Karto — Email confirmed</title>
+<title>Karto — Vocab Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
-    --paper:#F5F5F7; --ink:#1D1D1F; --muted:#86868B; --blue:#0071E3; --teal:#34C759;
-    --line:#D2D2D7; --card:#FFFFFF;
+    --paper:#F5F5F7;
+    --paper-dim:#E8E8ED;
+    --ink:#1D1D1F;
+    --muted:#86868B;
+    --red:#FF3B30;
+    --red-dim:#FFEBE9;
+    --amber:#FF9500;
+    --amber-dim:#FFF3E0;
+    --teal:#34C759;
+    --teal-dim:#E8F9EC;
+    --blue:#0071E3;
+    --blue-dim:#E8F1FC;
+    --line:#D2D2D7;
+    --card:#FFFFFF;
     --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 10px 30px rgba(0,0,0,0.10);
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-display: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, monospace;
+  }
+  body.dark{
+    --paper:#1E1E1E;
+    --paper-dim:#2C2C2E;
+    --ink:#F5F5F7;
+    --muted:#98989D;
+    --red:#FF453A;
+    --red-dim:#3A1210;
+    --amber:#FF9F0A;
+    --amber-dim:#3A2A10;
+    --teal:#30D158;
+    --teal-dim:#12301B;
+    --blue:#0A84FF;
+    --blue-dim:#0A2A45;
+    --line:#3A3A3C;
+    --card:#2C2C2E;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 10px 30px rgba(0,0,0,0.5);
   }
   *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
   body{
-    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
-    background:var(--paper); color:var(--ink); font-family:var(--font); padding:24px;
+    background-color:var(--paper);
+    color:var(--ink);
+    font-family:var(--font-body);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 16px 60px;
+    transition:background-color 0.2s, color 0.2s;
   }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
+  }
+
+  .app{ width:100%; max-width:640px; }
+
+  header.top{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 4px; margin:-28px -16px 18px; padding-left:20px; padding-right:20px;
+    flex-wrap:wrap; gap:8px;
+    position:sticky; top:0; z-index:15;
+    background:color-mix(in srgb, var(--paper) 82%, transparent);
+    backdrop-filter:blur(20px) saturate(180%);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    border-bottom:1px solid var(--line);
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand .stamp{
+    font-family:var(--font-display); font-weight:700; font-size:1.3rem;
+    letter-spacing:-0.02em;
+  }
+  .brand .stamp span{ color:var(--red); }
+  #langToggle{
+    font-size:0.72rem; color:var(--blue); font-family:var(--font-body); font-weight:600;
+    background:var(--blue-dim); border:none; padding:5px 11px; border-radius:999px; cursor:pointer;
+  }
+
+  .header-right{ display:flex; align-items:center; gap:10px; }
+
+  nav.tabs{
+    display:flex; gap:2px; flex-wrap:wrap; background:var(--paper-dim);
+    padding:3px; border-radius:10px;
+  }
+  nav.tabs button{
+    font-family:var(--font-body); font-size:0.78rem; letter-spacing:0;
+    background:none; border:none; color:var(--muted); font-weight:500;
+    padding:6px 12px; border-radius:8px; cursor:pointer; text-transform:none;
+    transition:background-color 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  nav.tabs button.active{ background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,0.12); font-weight:600; }
+  nav.tabs button:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--blue); outline-offset:2px;
+  }
+  #themeToggle{
+    background:var(--card); border:1px solid var(--line); border-radius:999px;
+    width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    padding:0; font-size:1rem; box-shadow:0 1px 2px rgba(0,0,0,0.06);
+  }
+  #signOutBtn{
+    background:var(--card); border:1px solid var(--line); border-radius:999px;
+    font-size:0.72rem; font-weight:500; color:var(--muted); padding:6px 12px; cursor:pointer;
+  }
+
+  .syncbar{
+    display:flex; align-items:center; justify-content:flex-end; gap:8px;
+    margin-bottom:16px; font-family:var(--font-body); font-size:0.74rem; color:var(--muted); font-weight:500;
+  }
+  .dot{ width:8px; height:8px; border-radius:50%; background:var(--muted); display:inline-block; }
+  .dot.synced{ background:var(--teal); }
+  .dot.pending{ background:var(--amber); }
+  .dot.error{ background:var(--red); }
+
+  .boxes{
+    display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:24px;
+  }
+  .box{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:10px 4px; text-align:center; position:relative;
+    box-shadow:0 1px 2px rgba(0,0,0,0.03);
+  }
+  .box .n{ font-family:var(--font-body); font-size:1.15rem; font-weight:700; }
+  .box .l{ font-size:0.62rem; color:var(--muted); text-transform:none; letter-spacing:0.2px; margin-top:2px;}
+  .box[data-box="1"] .n{ color: var(--red); }
+  .box[data-box="2"] .n{ color: var(--amber); }
+  .box[data-box="3"] .n{ color: #C9A227; }
+  .box[data-box="4"] .n{ color: #6E9B3F; }
+  .box[data-box="5"] .n{ color: var(--teal); }
+
+  .practice-meta{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family:var(--font-body); font-size:0.8rem; color:var(--muted); margin-bottom:10px; font-weight:500;
+  }
+  .scene{ perspective:1400px; margin-bottom:18px; position:relative; }
+  .scene::before, .scene::after{
+    content:""; position:absolute; left:6px; right:6px; height:280px;
+    background:var(--card); border:1px solid var(--line); border-radius:20px;
+  }
+  .scene::before{ top:10px; transform:rotate(-1.2deg); z-index:0; opacity:0.7; }
+  .scene::after{ top:6px; transform:rotate(0.9deg); z-index:0; opacity:0.85; }
   .card{
-    max-width:380px; width:100%; background:var(--card); border:1px solid var(--line);
-    border-radius:20px; box-shadow:var(--shadow); padding:36px 28px; text-align:center;
+    position:relative; width:100%; height:280px; z-index:1;
+    transform-style:preserve-3d; transition:transform 0.5s cubic-bezier(0.22,1,0.36,1);
+    cursor:pointer;
   }
-  .icon{
-    width:56px; height:56px; border-radius:50%; background:var(--teal); color:#fff;
-    display:flex; align-items:center; justify-content:center; font-size:1.6rem;
-    margin:0 auto 18px;
+  .card.flipped{ transform:rotateY(180deg); }
+  .face{
+    position:absolute; inset:0; backface-visibility:hidden;
+    background:var(--card); border:1px solid var(--line); border-radius:20px;
+    box-shadow:var(--shadow);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:24px;
   }
-  h1{ font-size:1.3rem; font-weight:700; letter-spacing:-0.01em; margin:0 0 8px; }
-  p{ color:var(--muted); font-size:0.9rem; line-height:1.5; margin:0 0 22px; }
-  a.btn{
-    display:inline-block; background:var(--blue); color:#fff; text-decoration:none;
-    font-weight:600; font-size:0.9rem; padding:11px 22px; border-radius:980px;
+  .face.back{ transform:rotateY(180deg); }
+  .direction-tag{
+    position:absolute; top:14px; right:18px; font-family:var(--font-body);
+    font-size:0.68rem; color:var(--muted); letter-spacing:0.2px; text-transform:none; font-weight:600;
+    background:var(--paper-dim); padding:3px 9px; border-radius:999px;
   }
-  .stamp{ font-weight:700; }
-  .stamp span{ color:#FF3B30; }
+  .word-main{ font-family:var(--font-display); font-weight:700; letter-spacing:-0.02em; font-size:2rem; line-height:1.2; }
+  .word-note{ font-size:0.85rem; color:var(--muted); margin-top:12px; font-style:normal; max-width:36ch; }
+  .hint{ font-size:0.72rem; color:var(--muted); margin-top:18px; font-family:var(--font-body); }
+
+  .rate-row{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+  .rate-row button{
+    padding:14px 6px; border-radius:14px; border:none;
+    font-family:var(--font-body); font-weight:600; font-size:0.88rem; cursor:pointer;
+    background:var(--paper-dim); color:var(--ink); transition:transform 0.15s;
+  }
+  .rate-row button:active:not(:disabled){ transform:scale(0.96); }
+  .rate-row button:disabled{ opacity:0.35; cursor:not-allowed; }
+  .rate-row button.again{ background:var(--red-dim); color:#B4271E; }
+  .rate-row button.good{ background:var(--amber-dim); color:#B36600; }
+  .rate-row button.easy{ background:var(--teal-dim); color:#1F8A3D; }
+  .rate-row button small{ display:block; font-family:var(--font-body); font-weight:500; opacity:0.75; margin-top:3px; }
+
+  .empty, .summary{
+    background:var(--card); border:1px solid var(--line); border-radius:20px;
+    padding:32px 24px; text-align:center; box-shadow:var(--shadow);
+  }
+  .empty h2, .summary h2{ font-family:var(--font-display); font-weight:700; letter-spacing:-0.01em; margin-top:0; }
+  .btn{
+    font-family:var(--font-body); font-weight:600; font-size:0.88rem;
+    background:var(--blue); color:#fff; border:none; border-radius:980px;
+    padding:10px 20px; cursor:pointer; transition:opacity 0.15s, transform 0.15s;
+  }
+  .btn:active:not(:disabled){ transform:scale(0.97); }
+  .btn.secondary{ background:var(--paper-dim); border:none; color:var(--ink); }
+  .btn.danger{ background:var(--red); color:#fff; }
+  .btn.ghost{ background:none; border:none; color:var(--blue); text-decoration:none; padding:6px 4px; font-size:0.8rem; font-weight:500; }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .btn.full{ width:100%; }
+
+  .panel{ background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; margin-bottom:16px; box-shadow:var(--shadow); }
+  .panel h3{ margin-top:0; font-family:var(--font-display); font-weight:700; letter-spacing:-0.01em; font-size:1.05rem; }
+  .panel h3 .tag{ font-family:var(--font-body); font-size:0.68rem; color:var(--muted); font-weight:500; margin-left:8px; text-transform:none; }
+  .row{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+  .field{ flex:1; min-width:140px; display:flex; flex-direction:column; gap:4px; }
+  .field label{ font-size:0.72rem; color:var(--muted); font-family:var(--font-body); font-weight:500; text-transform:none; }
+  input[type=text], input[type=password], input[type=email], textarea{
+    font-family:var(--font-body); font-size:0.95rem; padding:10px 12px;
+    border:1px solid var(--line); border-radius:10px; background:var(--paper-dim); color:var(--ink);
+    width:100%;
+  }
+  textarea{ min-height:80px; resize:vertical; font-family:var(--font-mono); font-size:0.82rem; }
+  .wordlist{ max-height:340px; overflow-y:auto; }
+  .wordrow{
+    display:flex; align-items:center; gap:10px; padding:10px 0;
+    border-bottom:1px solid var(--line); font-size:0.9rem;
+  }
+  .wordrow .de{ font-weight:600; min-width:120px; }
+  .wordrow .target{ color:var(--muted); flex:1; }
+  .wordrow .meta{ font-family:var(--font-body); font-weight:500; font-size:0.7rem; color:var(--muted); background:var(--paper-dim); padding:2px 8px; border-radius:999px; }
+  .wordrow button{ background:none; border:none; color:var(--red); cursor:pointer; font-size:0.78rem; font-weight:500; }
+  .count-line{ font-family:var(--font-body); font-weight:500; font-size:0.78rem; color:var(--muted); margin-bottom:10px; }
+
+  .statgrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .stat{ background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px; text-align:center; box-shadow:var(--shadow); }
+  .stat .big{ font-family:var(--font-display); font-weight:700; font-size:1.7rem; }
+  .stat .lbl{ font-size:0.74rem; color:var(--muted); text-transform:none; letter-spacing:0.1px; margin-top:2px; }
+
+  .help-step{ display:flex; gap:14px; margin-bottom:18px; }
+  .help-step .num{
+    font-family:var(--font-display); font-weight:700; font-size:1.2rem; color:var(--blue);
+    min-width:28px; flex-shrink:0;
+  }
+  .help-step h4{ margin:0 0 4px; font-family:var(--font-body); font-weight:600; font-size:0.95rem; }
+  .help-step p{ margin:0; font-size:0.85rem; color:var(--muted); line-height:1.5; }
+  .help-note{
+    background:var(--blue-dim); border-left:none;
+    padding:12px 14px; font-size:0.82rem; border-radius:12px; margin-top:6px;
+  }
+
+  footer{ margin-top:24px; font-size:0.72rem; color:var(--muted); text-align:center; font-family:var(--font-body); }
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:color-mix(in srgb, var(--ink) 92%, transparent); color:var(--paper); padding:10px 18px; border-radius:999px;
+    font-size:0.82rem; font-weight:500; opacity:0; pointer-events:none; transition:opacity 0.3s; max-width:80vw; text-align:center;
+    backdrop-filter:blur(10px);
+  }
+  .toast.show{ opacity:1; }
+
+  .streak-badge{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:var(--font-body); font-weight:600; font-size:0.78rem; color:var(--amber);
+  }
+
+  .fab{
+    position:fixed; bottom:24px; right:24px; width:52px; height:52px;
+    border-radius:50%; background:var(--blue); color:#fff; border:none;
+    font-size:1.5rem; cursor:pointer; box-shadow:var(--shadow); z-index:20;
+    display:flex; align-items:center; justify-content:center; transition:transform 0.15s;
+  }
+  .fab:active{ transform:scale(0.94); }
+  .fab-panel{
+    position:fixed; bottom:86px; right:24px; width:min(320px, calc(100vw - 48px));
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    box-shadow:var(--shadow); padding:18px; z-index:20;
+  }
+  .fab-panel h4{ margin:0 0 10px; font-family:var(--font-display); font-weight:700; font-size:0.95rem; }
+  .fab-panel .row{ margin-bottom:8px; }
+
+  .celebrate{
+    position:fixed; top:20%; left:50%; transform:translate(-50%,0);
+    background:var(--teal); color:#fff; padding:14px 24px; border-radius:16px;
+    font-family:var(--font-display); font-weight:700; font-size:1.05rem; box-shadow:var(--shadow);
+    opacity:0; pointer-events:none; transition:opacity 0.4s, transform 0.4s; z-index:30;
+  }
+  .celebrate.show{ opacity:1; transform:translate(-50%,-8px); }
+
+  /* Auth screen */
+  .auth-wrap{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:70vh; width:100%; }
+  .auth-card{ width:100%; max-width:380px; background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); padding:32px 28px; }
+  .auth-card h2{ font-family:var(--font-display); font-weight:700; letter-spacing:-0.01em; margin-top:0; text-align:center; }
+  .auth-card p.sub{ text-align:center; color:var(--muted); font-size:0.85rem; margin-top:-8px; margin-bottom:20px; }
+  .auth-error{ color:var(--red); font-size:0.82rem; margin-top:10px; text-align:center; }
+  .auth-switch{ text-align:center; margin-top:16px; font-size:0.85rem; color:var(--muted); }
+  .auth-switch button{ background:none; border:none; color:var(--blue); font-weight:600; cursor:pointer; font-size:0.85rem; }
 </style>
 </head>
 <body>
-  <div class="card">
-    <div class="icon" id="icon">✓</div>
-    <h1 id="title">Email confirmed</h1>
-    <p id="message">Loading…</p>
-    <a class="btn" id="continueBtn" href="./">Continue to Karto</a>
-  </div>
+<div class="app" id="appRoot"></div>
+<div class="toast" id="toast"></div>
+<div class="celebrate" id="celebrate"></div>
 
 <script>
 (function(){
@@ -50,27 +299,471 @@
   const SUPABASE_KEY = 'sb_publishable_Vw4Jbd3rvrWZKvszLzhdGQ_RuAXhd4J';
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const titleEl = document.getElementById('title');
-  const msgEl = document.getElementById('message');
-  const iconEl = document.getElementById('icon');
+  const INTERVALS = {1:1, 2:2, 3:4, 4:9, 5:21};
+  const SESSION_SIZE = 15;
 
-  (async function(){
-    const { data, error } = await sb.auth.getSession();
+  let session = null;       // practice session
+  let authSession = null;   // supabase auth session
+  let words = [];
+  let currentLang = 'ro';
+  let currentTab = 'practice';
+  let streak = { count:0, lastDate:null };
+  let authMode = 'login';   // 'login' | 'signup'
+  let authError = '';
+  let authBusy = false;
+  let dataStatus = 'idle';  // idle | loading | saving | error
 
-    // Strip the token out of the address bar immediately, regardless of outcome
+  const appRoot = document.getElementById('appRoot');
+  const toastEl = document.getElementById('toast');
+  const celebrateEl = document.getElementById('celebrate');
+
+  function todayStr(){ return new Date().toISOString().slice(0,10); }
+  function addDays(dateStr, n){
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() + n);
+    return d.toISOString().slice(0,10);
+  }
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(()=>toastEl.classList.remove('show'), 2200);
+  }
+  function showCelebration(msg){
+    celebrateEl.textContent = msg;
+    celebrateEl.classList.add('show');
+    setTimeout(()=>celebrateEl.classList.remove('show'), 1800);
+  }
+  function langName(lang){ return lang === 'ro' ? 'Romanian' : 'English'; }
+  function escapeHtml(s){
+    const d = document.createElement('div');
+    d.textContent = s == null ? '' : s;
+    return d.innerHTML;
+  }
+
+  // ---------- local prefs (theme, lang, streak) stay in localStorage; words live in Supabase ----------
+  function loadTheme(){ try{ return localStorage.getItem('karto-theme') === 'dark'; }catch(e){ return false; } }
+  function saveTheme(isDark){ try{ localStorage.setItem('karto-theme', isDark?'dark':'light'); }catch(e){} }
+  function loadLang(){ try{ return localStorage.getItem('karto-lang') || 'ro'; }catch(e){ return 'ro'; } }
+  function saveLang(l){ try{ localStorage.setItem('karto-lang', l); }catch(e){} }
+  function loadStreak(){
+    try{ const raw = localStorage.getItem('karto-streak'); streak = raw ? JSON.parse(raw) : {count:0,lastDate:null}; }
+    catch(e){ streak = {count:0,lastDate:null}; }
+  }
+  function saveStreak(){ try{ localStorage.setItem('karto-streak', JSON.stringify(streak)); }catch(e){} }
+  function registerPracticeToday(){
+    const t = todayStr();
+    if(streak.lastDate === t) return;
+    if(streak.lastDate === addDays(t,-1)) streak.count += 1; else streak.count = 1;
+    streak.lastDate = t;
+    saveStreak();
+  }
+
+  // ---------- Supabase row <-> app word mapping ----------
+  function rowToWord(row){
+    return {
+      id: row.id, de: row.de, target: row.target, lang: row.lang,
+      note: row.note || '', box: row.box, nextReview: row.next_review,
+      createdAt: row.created_at ? row.created_at.slice(0,10) : todayStr()
+    };
+  }
+
+  async function fetchWords(){
+    dataStatus = 'loading'; renderSyncBar();
+    const { data, error } = await sb.from('words').select('*').order('created_at', {ascending:false});
+    if(error){ dataStatus='error'; renderSyncBar(); showToast('Could not load words: ' + error.message); return; }
+    words = (data || []).map(rowToWord);
+    dataStatus = 'idle'; renderSyncBar();
+  }
+
+  async function insertWord(w){
+    dataStatus = 'saving'; renderSyncBar();
+    const { data, error } = await sb.from('words').insert({
+      user_id: authSession.user.id, de: w.de, target: w.target, lang: w.lang,
+      note: w.note || '', box: w.box, next_review: w.nextReview
+    }).select().single();
+    if(error){ dataStatus='error'; renderSyncBar(); showToast('Save failed: ' + error.message); return null; }
+    dataStatus = 'idle'; renderSyncBar();
+    return rowToWord(data);
+  }
+
+  async function insertWordsBulk(list){
+    dataStatus = 'saving'; renderSyncBar();
+    const rows = list.map(w => ({
+      user_id: authSession.user.id, de: w.de, target: w.target, lang: w.lang,
+      note: '', box: 1, next_review: todayStr()
+    }));
+    const { data, error } = await sb.from('words').insert(rows).select();
+    if(error){ dataStatus='error'; renderSyncBar(); showToast('Bulk add failed: ' + error.message); return []; }
+    dataStatus = 'idle'; renderSyncBar();
+    return (data || []).map(rowToWord);
+  }
+
+  async function updateWordRemote(w){
+    dataStatus = 'saving'; renderSyncBar();
+    const { error } = await sb.from('words').update({ box: w.box, next_review: w.nextReview }).eq('id', w.id);
+    if(error){ dataStatus='error'; renderSyncBar(); showToast('Update failed: ' + error.message); return; }
+    dataStatus = 'idle'; renderSyncBar();
+  }
+
+  async function deleteWordRemote(id){
+    dataStatus = 'saving'; renderSyncBar();
+    const { error } = await sb.from('words').delete().eq('id', id);
+    if(error){ dataStatus='error'; renderSyncBar(); showToast('Delete failed: ' + error.message); return; }
+    dataStatus = 'idle'; renderSyncBar();
+  }
+
+  function currentWords(){ return words.filter(w => w.lang === currentLang); }
+  function dueWords(){ const t = todayStr(); return currentWords().filter(w => w.nextReview <= t); }
+
+  // ============ AUTH SCREEN ============
+  function renderAuth(){
+    const isSignup = authMode === 'signup';
+    appRoot.innerHTML = `
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <h2>Karto<span style="color:var(--red)">.</span></h2>
+          <p class="sub">${isSignup ? 'Create an account to start your own vocab list' : 'Log in to your vocab list'}</p>
+          <div class="field" style="margin-bottom:10px;"><label>Email</label><input type="email" id="authEmail" placeholder="you@example.com"></div>
+          <div class="field" style="margin-bottom:10px;"><label>Password</label><input type="password" id="authPassword" placeholder="At least 6 characters"></div>
+          <button class="btn full" id="authSubmit" ${authBusy?'disabled':''}>${authBusy ? 'Please wait…' : (isSignup ? 'Sign up' : 'Log in')}</button>
+          ${authError ? `<div class="auth-error">${escapeHtml(authError)}</div>` : ''}
+          <div class="auth-switch">
+            ${isSignup ? `Already have an account? <button id="authSwitch">Log in</button>` : `New here? <button id="authSwitch">Create an account</button>`}
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('authSwitch').onclick = ()=>{ authMode = isSignup ? 'login' : 'signup'; authError=''; renderAuth(); };
+    document.getElementById('authSubmit').onclick = async ()=>{
+      const email = document.getElementById('authEmail').value.trim();
+      const password = document.getElementById('authPassword').value;
+      if(!email || password.length < 6){ authError = 'Enter a valid email and a password of at least 6 characters.'; renderAuth(); return; }
+      authBusy = true; authError=''; renderAuth();
+      let result;
+      if(isSignup) result = await sb.auth.signUp({ email, password });
+      else result = await sb.auth.signInWithPassword({ email, password });
+      authBusy = false;
+      if(result.error){ authError = result.error.message; renderAuth(); return; }
+      if(isSignup && result.data.user && !result.data.session){
+        authError = ''; 
+        appRoot.innerHTML = `<div class="auth-wrap"><div class="auth-card"><h2>Check your email</h2><p class="sub">We sent a confirmation link to ${escapeHtml(email)}. Click it, then come back and log in.</p><button class="btn full" id="backToLogin">Back to login</button></div></div>`;
+        document.getElementById('backToLogin').onclick = ()=>{ authMode='login'; renderAuth(); };
+        return;
+      }
+      authSession = result.data.session;
+      await boot();
+    };
+  }
+
+  // ============ MAIN APP SHELL ============
+  function renderShell(){
+    appRoot.innerHTML = `
+      <header class="top">
+        <div class="brand">
+          <div class="stamp">Karto<span>.</span></div>
+          <button id="langToggle" title="Switch language pair"></button>
+        </div>
+        <div class="header-right">
+          <nav class="tabs">
+            <button data-tab="practice" class="active">Practice</button>
+            <button data-tab="manage">Words</button>
+            <button data-tab="stats">Stats</button>
+            <button data-tab="help">Help</button>
+          </nav>
+          <button id="themeToggle" title="Toggle dark mode">◐</button>
+          <button id="signOutBtn" title="Sign out">Sign out</button>
+        </div>
+      </header>
+      <div class="syncbar" id="syncBar"></div>
+      <div class="boxes" id="boxStrip"></div>
+      <div id="view"></div>
+      <footer>Karto · Leitner system</footer>
+    `;
+    const langToggleBtn = document.getElementById('langToggle');
+    langToggleBtn.textContent = `German → ${langName(currentLang)}`;
+    langToggleBtn.onclick = ()=>{
+      currentLang = currentLang === 'ro' ? 'en' : 'ro';
+      saveLang(currentLang);
+      session = null;
+      langToggleBtn.textContent = `German → ${langName(currentLang)}`;
+      renderBoxStrip();
+      switchTab(currentTab);
+    };
+    document.getElementById('themeToggle').onclick = ()=>{
+      const isDark = document.body.classList.toggle('dark');
+      saveTheme(isDark);
+    };
+    document.getElementById('signOutBtn').onclick = async ()=>{
+      await sb.auth.signOut();
+      authSession = null; words = [];
+      renderAuth();
+    };
+    document.querySelectorAll('nav.tabs button[data-tab]').forEach(b=>{
+      b.addEventListener('click', ()=>switchTab(b.dataset.tab));
+    });
+    renderBoxStrip();
+    renderSyncBar();
+    switchTab('practice');
+  }
+
+  function renderSyncBar(){
+    const el = document.getElementById('syncBar');
+    if(!el) return;
+    let dotClass='synced', label='Up to date';
+    if(dataStatus==='loading'){ dotClass='pending'; label='Loading your words…'; }
+    else if(dataStatus==='saving'){ dotClass='pending'; label='Saving…'; }
+    else if(dataStatus==='error'){ dotClass='error'; label='Sync error'; }
+    el.innerHTML = `<span class="dot ${dotClass}"></span><span>${label}</span>`;
+  }
+
+  function renderBoxStrip(){
+    const el = document.getElementById('boxStrip');
+    if(!el) return;
+    let html = '';
+    const cw = currentWords();
+    for(let b=1;b<=5;b++){
+      const count = cw.filter(w=>w.box===b).length;
+      html += `<div class="box" data-box="${b}"><div class="n">${count}</div><div class="l">Box ${b}</div></div>`;
+    }
+    el.innerHTML = html;
+  }
+
+  function switchTab(tab){
+    currentTab = tab;
+    document.querySelectorAll('nav.tabs button[data-tab]').forEach(b=>{
+      b.classList.toggle('active', b.dataset.tab === tab);
+    });
+    if(tab === 'practice') renderPractice();
+    else if(tab === 'manage') renderManage();
+    else if(tab === 'stats') renderStats();
+    else renderHelp();
+  }
+
+  // ============ PRACTICE ============
+  function buildSession(force){
+    let pool = force ? currentWords().slice() : dueWords();
+    if(pool.length === 0){ session = null; return; }
+    pool.sort((a,b)=> a.nextReview.localeCompare(b.nextReview));
+    pool = pool.slice(0, SESSION_SIZE);
+    const cards = pool.map(w => ({ wordId: w.id, direction: Math.random()<0.5 ? 'de2target':'target2de' }));
+    for(let i=cards.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [cards[i],cards[j]]=[cards[j],cards[i]]; }
+    session = { cards, idx:0, results:{again:0,good:0,easy:0} };
+  }
+  function wordById(id){ return words.find(w=>w.id===id); }
+
+  function renderPractice(){
+    const viewEl = document.getElementById('view');
+    if(!session) buildSession(false);
+    if(!session){
+      const total = currentWords().length;
+      viewEl.innerHTML = total === 0 ? `
+        <div class="empty"><h2>No words yet</h2>
+        <p>Add your first German–${langName(currentLang)} word in the "Words" tab.</p>
+        <button class="btn" id="goManage">Add a word</button></div>` : `
+        <div class="empty"><h2>Nothing due today</h2>
+        <p>All ${total} words aren't due for review yet. You can still run a free practice round.</p>
+        <button class="btn" id="forcePractice">Practice anyway</button></div>`;
+      const gm = document.getElementById('goManage'); if(gm) gm.onclick=()=>switchTab('manage');
+      const fp = document.getElementById('forcePractice'); if(fp) fp.onclick=()=>{ buildSession(true); renderPractice(); };
+      return;
+    }
+    if(session.idx >= session.cards.length){
+      const r = session.results;
+      viewEl.innerHTML = `<div class="summary"><h2>Round complete</h2>
+        <p><strong>${r.again}</strong> Again · <strong>${r.good}</strong> Good · <strong>${r.easy}</strong> Easy</p>
+        <button class="btn" id="newRound">New round</button></div>`;
+      document.getElementById('newRound').onclick = ()=>{ session=null; renderPractice(); };
+      return;
+    }
+    const c = session.cards[session.idx];
+    const w = wordById(c.wordId);
+    if(!w){ session.idx++; renderPractice(); return; }
+    const front = c.direction==='de2target' ? w.de : w.target;
+    const back = c.direction==='de2target' ? w.target : w.de;
+    const dirLabel = c.direction==='de2target' ? `DE → ${w.lang.toUpperCase()}` : `${w.lang.toUpperCase()} → DE`;
+    viewEl.innerHTML = `
+      <div class="practice-meta">
+        <span>Card ${session.idx+1} / ${session.cards.length}</span>
+        <span class="streak-badge">🔥 ${streak.count} day${streak.count===1?'':'s'}</span>
+        <span>Box ${w.box}</span>
+      </div>
+      <div class="scene">
+        <div class="card" id="flipCard">
+          <div class="face front"><div class="direction-tag">${dirLabel}</div>
+            <div class="word-main">${escapeHtml(front)}</div>
+            <div class="hint">Tap or press Space to flip</div></div>
+          <div class="face back"><div class="direction-tag">${dirLabel}</div>
+            <div class="word-main">${escapeHtml(back)}</div>
+            ${w.note ? `<div class="word-note">${escapeHtml(w.note)}</div>` : ''}</div>
+        </div>
+      </div>
+      <div class="rate-row">
+        <button class="again" id="rateAgain" disabled>Again<small>Box 1</small></button>
+        <button class="good" id="rateGood" disabled>Good<small>+1 box</small></button>
+        <button class="easy" id="rateEasy" disabled>Easy<small>+2 boxes</small></button>
+      </div>`;
+    const cardEl = document.getElementById('flipCard');
+    const btnAgain=document.getElementById('rateAgain'), btnGood=document.getElementById('rateGood'), btnEasy=document.getElementById('rateEasy');
+    function doFlip(){ cardEl.classList.add('flipped'); btnAgain.disabled=false; btnGood.disabled=false; btnEasy.disabled=false; }
+    cardEl.onclick = doFlip;
+    document.onkeydown = (e)=>{
+      if(currentTab !== 'practice') return;
+      if(e.code==='Space'){ e.preventDefault(); if(!cardEl.classList.contains('flipped')) doFlip(); }
+      if(cardEl.classList.contains('flipped')){
+        if(e.key==='1') btnAgain.click();
+        if(e.key==='2') btnGood.click();
+        if(e.key==='3') btnEasy.click();
+      }
+    };
+    btnAgain.onclick = ()=>rate(w,'again');
+    btnGood.onclick = ()=>rate(w,'good');
+    btnEasy.onclick = ()=>rate(w,'easy');
+  }
+
+  async function rate(w, kind){
+    const t = todayStr();
+    const wasBox = w.box;
+    if(kind==='again'){ w.box=1; w.nextReview=addDays(t,INTERVALS[1]); session.results.again++; }
+    else if(kind==='good'){ w.box=Math.min(w.box+1,5); w.nextReview=addDays(t,INTERVALS[w.box]); session.results.good++; }
+    else { w.box=Math.min(w.box+2,5); w.nextReview=addDays(t,INTERVALS[w.box]); session.results.easy++; }
+    registerPracticeToday();
+    if(w.box===5 && wasBox!==5) showCelebration(`"${w.de}" mastered — Box 5 ✓`);
+    session.idx++;
+    renderBoxStrip();
+    renderPractice();
+    await updateWordRemote(w);
+  }
+
+  // ============ MANAGE ============
+  function renderManage(){
+    const viewEl = document.getElementById('view');
+    const tName = langName(currentLang);
+    viewEl.innerHTML = `
+      <div class="panel">
+        <h3>New word (German → ${tName})</h3>
+        <div class="row">
+          <div class="field"><label>German</label><input type="text" id="inDe" placeholder="e.g. die Nachhaltigkeit"></div>
+          <div class="field"><label>${tName}</label><input type="text" id="inTarget" placeholder="translation"></div>
+        </div>
+        <div class="row"><div class="field"><label>Note (optional)</label><input type="text" id="inNote" placeholder="example sentence or context"></div></div>
+        <button class="btn" id="addWordBtn">Add word</button>
+      </div>
+      <div class="panel">
+        <h3>Add several at once</h3>
+        <textarea id="bulkInput" placeholder="one word per line, e.g.:&#10;die Nachhaltigkeit - sustainability&#10;der Umweltschutz - environmental protection"></textarea>
+        <div class="row" style="margin-top:8px;"><button class="btn secondary" id="bulkAddBtn">Add all</button></div>
+      </div>
+      <div class="panel">
+        <h3>Word list (${tName})</h3>
+        <div class="count-line">${currentWords().length} words in this pair</div>
+        <div class="wordlist" id="wordlist"></div>
+      </div>
+    `;
+    renderWordList();
+    document.getElementById('addWordBtn').onclick = async ()=>{
+      const de = document.getElementById('inDe').value.trim();
+      const target = document.getElementById('inTarget').value.trim();
+      const note = document.getElementById('inNote').value.trim();
+      if(!de || !target){ showToast(`Please fill in German and ${tName}`); return; }
+      const newW = await insertWord({ de, target, lang: currentLang, note, box:1, nextReview: todayStr() });
+      if(newW){ words.unshift(newW); renderBoxStrip(); renderManage(); showToast('Word saved'); }
+    };
+    document.getElementById('bulkAddBtn').onclick = async ()=>{
+      const raw = document.getElementById('bulkInput').value;
+      const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+      const toAdd = [];
+      lines.forEach(line=>{
+        const parts = line.split(/\s-\s|\t|;/);
+        if(parts.length>=2){ const de=parts[0].trim(), target=parts[1].trim(); if(de && target) toAdd.push({de,target,lang:currentLang}); }
+      });
+      if(toAdd.length===0){ showToast('No valid lines found (word - translation)'); return; }
+      const added = await insertWordsBulk(toAdd);
+      words = [...added, ...words];
+      renderBoxStrip(); renderManage();
+      showToast(`${added.length} words added`);
+    };
+  }
+
+  function renderWordList(){
+    const listEl = document.getElementById('wordlist');
+    const cw = currentWords();
+    if(cw.length===0){ listEl.innerHTML = '<div class="count-line">No words saved yet for this pair.</div>'; return; }
+    const sorted = cw.slice().sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+    listEl.innerHTML = sorted.map(w=>`
+      <div class="wordrow">
+        <div class="de">${escapeHtml(w.de)}</div>
+        <div class="target">${escapeHtml(w.target)}</div>
+        <div class="meta">Box ${w.box}</div>
+        <button data-id="${w.id}" class="delBtn">delete</button>
+      </div>`).join('');
+    listEl.querySelectorAll('.delBtn').forEach(btn=>{
+      btn.onclick = async ()=>{
+        const id = btn.dataset.id;
+        words = words.filter(w=>w.id!==id);
+        renderBoxStrip(); renderManage();
+        await deleteWordRemote(id);
+      };
+    });
+  }
+
+  // ============ STATS ============
+  function renderStats(){
+    const viewEl = document.getElementById('view');
+    const cw = currentWords();
+    const total = cw.length, due = dueWords().length, mastered = cw.filter(w=>w.box===5).length;
+    const newToday = cw.filter(w=>w.createdAt===todayStr()).length;
+    viewEl.innerHTML = `
+      <div class="statgrid">
+        <div class="stat"><div class="big">${total}</div><div class="lbl">Words (${currentLang.toUpperCase()})</div></div>
+        <div class="stat"><div class="big">${due}</div><div class="lbl">Due today</div></div>
+        <div class="stat"><div class="big">${mastered}</div><div class="lbl">Mastered (Box 5)</div></div>
+        <div class="stat"><div class="big">${newToday}</div><div class="lbl">Added today</div></div>
+      </div>`;
+  }
+
+  // ============ HELP ============
+  function renderHelp(){
+    const viewEl = document.getElementById('view');
+    viewEl.innerHTML = `
+      <div class="panel"><h3>How it works</h3>
+        <div class="help-step"><div class="num">1</div><div><h4>Collect words</h4>
+        <p>Whenever you come across a new word while reading, add it in the "Words" tab — one at a time, or several at once by pasting a list.</p></div></div>
+        <div class="help-step"><div class="num">2</div><div><h4>Practice with the 5 boxes</h4>
+        <p>Every word starts in Box 1. Answer correctly and it moves up a box, so it's tested less often. Get it wrong and it drops back to Box 1, due again tomorrow.</p></div></div>
+        <div class="help-step"><div class="num">3</div><div><h4>Short daily rounds</h4>
+        <p>A round is 10–15 due cards — a few minutes is enough.</p></div></div>
+      </div>
+      <div class="panel"><h3>Your account</h3>
+        <p style="font-size:0.85rem; color:var(--muted); line-height:1.5;">
+          Your words are tied to your Karto account and stored securely — only you can see or edit them, even though everyone shares the same app. Log in with the same account on any device to get the same list.
+        </p>
+      </div>
+    `;
+  }
+
+  // ============ BOOT ============
+  async function boot(){
+    if(loadTheme()) document.body.classList.add('dark');
+    currentLang = loadLang();
+    loadStreak();
+    renderShell();
+    await fetchWords();
+    renderBoxStrip();
+    switchTab(currentTab);
+  }
+
+  (async function init(){
+    const { data } = await sb.auth.getSession();
+    authSession = data.session;
+    // Clean the access token out of the URL bar right after it's been consumed
     if(window.location.hash && window.location.hash.includes('access_token')){
       window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
     }
-
-    if(error || !data.session){
-      titleEl.textContent = 'Confirmation link expired';
-      msgEl.textContent = 'This link may have already been used or timed out. Just log in directly with your email and password instead.';
-      iconEl.textContent = '!';
-      iconEl.style.background = '#FF9500';
-      return;
-    }
-    titleEl.textContent = 'Email confirmed';
-    msgEl.textContent = "You're all set and already logged in. Continue on to your vocab list.";
+    if(authSession){ await boot(); }
+    else { renderAuth(); }
+    sb.auth.onAuthStateChange((event, sess)=>{
+      if(event === 'SIGNED_OUT'){ authSession=null; words=[]; renderAuth(); }
+    });
   })();
 })();
 </script>
