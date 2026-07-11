@@ -471,16 +471,37 @@
         <div class="auth-card">
           <h2>Karto<span style="color:var(--red)">.</span></h2>
           <p class="sub">${isSignup ? 'Create an account to start your own vocab list' : 'Log in to your vocab list'}</p>
+
+          <button class="btn full" id="googleBtn" style="background:#fff; color:#1D1D1F; border:1px solid var(--line); display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px;">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84c-.21 1.13-.84 2.08-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33C2.44 15.98 5.48 18 9 18z"/><path fill="#FBBC05" d="M3.97 10.72c-.18-.54-.28-1.11-.28-1.72s.1-1.18.28-1.72V4.95H.96A8.99 8.99 0 000 9c0 1.45.35 2.83.96 4.05l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0 5.48 0 2.44 2.02.96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+            Continue with Google
+          </button>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+            <div style="flex:1; height:1px; background:var(--line);"></div>
+            <span style="font-size:0.75rem; color:var(--muted);">or with email</span>
+            <div style="flex:1; height:1px; background:var(--line);"></div>
+          </div>
+
           <div class="field" style="margin-bottom:10px;"><label>Email</label><input type="email" id="authEmail" placeholder="you@example.com"></div>
           <div class="field" style="margin-bottom:10px;"><label>Password</label><input type="password" id="authPassword" placeholder="At least 6 characters"></div>
           <button class="btn full" id="authSubmit" ${authBusy?'disabled':''}>${authBusy ? 'Please wait…' : (isSignup ? 'Sign up' : 'Log in')}</button>
           ${authError ? `<div class="auth-error">${escapeHtml(authError)}</div>` : ''}
+          <p style="font-size:0.74rem; color:var(--muted); text-align:center; margin-top:14px; line-height:1.5;">
+            Email accounts can't recover a forgotten password yet — Google sign-in is recommended if you'd rather not risk that.
+          </p>
           <div class="auth-switch">
             ${isSignup ? `Already have an account? <button id="authSwitch">Log in</button>` : `New here? <button id="authSwitch">Create an account</button>`}
           </div>
         </div>
       </div>
     `;
+    document.getElementById('googleBtn').onclick = async ()=>{
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + window.location.pathname }
+      });
+      if(error){ authError = error.message; renderAuth(); }
+    };
     document.getElementById('authSwitch').onclick = ()=>{ authMode = isSignup ? 'login' : 'signup'; authError=''; renderAuth(); };
     document.getElementById('authSubmit').onclick = async ()=>{
       const email = document.getElementById('authEmail').value.trim();
@@ -803,9 +824,12 @@
   (async function init(){
     const { data } = await sb.auth.getSession();
     authSession = data.session;
-    // Clean the access token out of the URL bar right after it's been consumed
+    // Clean the access token or OAuth code out of the URL bar right after it's been consumed
     if(window.location.hash && window.location.hash.includes('access_token')){
       window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+    }
+    if(window.location.search && window.location.search.includes('code=')){
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
     if(authSession){ await boot(); }
     else { renderAuth(); }
