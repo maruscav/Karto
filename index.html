@@ -368,7 +368,7 @@
   let session = null;       // practice session
   let authSession = null;   // supabase auth session
   let words = [];
-  let currentLang = 'ro';
+  let currentLang = 'en';
   let currentTab = 'practice';
   let streak = { count:0, lastDate:null };
   let authMode = 'login';   // 'login' | 'signup'
@@ -378,20 +378,20 @@
   let isGuest = false;
 
   const DEMO_WORDS = [
-    { de:'die Nachhaltigkeit', target:'sustenabilitate' },
-    { de:'der Umweltschutz', target:'protecția mediului' },
-    { de:'die Herausforderung', target:'provocare' },
-    { de:'die Verantwortung', target:'responsabilitate' },
-    { de:'die Rücksicht', target:'considerație' },
-    { de:'entscheiden', target:'a decide' },
-    { de:'die Erfahrung', target:'experiență' },
-    { de:'verändern', target:'a schimba' },
-    { de:'die Gesellschaft', target:'societate' },
-    { de:'bewusst', target:'conștient' }
+    { de:'die Nachhaltigkeit', target:'sustainability' },
+    { de:'der Umweltschutz', target:'environmental protection' },
+    { de:'die Herausforderung', target:'challenge' },
+    { de:'die Verantwortung', target:'responsibility' },
+    { de:'die Rücksicht', target:'consideration' },
+    { de:'entscheiden', target:'to decide' },
+    { de:'die Erfahrung', target:'experience' },
+    { de:'verändern', target:'to change' },
+    { de:'die Gesellschaft', target:'society' },
+    { de:'bewusst', target:'aware' }
   ];
   function buildDemoWords(){
     return DEMO_WORDS.map((w, i) => ({
-      id: 'demo-' + i, de: w.de, target: w.target, lang: 'ro', note: '',
+      id: 'demo-' + i, de: w.de, target: w.target, lang: 'en', note: '',
       box: 1, nextReview: todayStr(), createdAt: todayStr()
     }));
   }
@@ -448,7 +448,7 @@
   // ---------- local prefs (theme, lang, streak) stay in localStorage; words live in Supabase ----------
   function loadTheme(){ try{ return localStorage.getItem('karto-theme') === 'dark'; }catch(e){ return false; } }
   function saveTheme(isDark){ try{ localStorage.setItem('karto-theme', isDark?'dark':'light'); }catch(e){} }
-  function loadLang(){ try{ return localStorage.getItem('karto-lang') || 'ro'; }catch(e){ return 'ro'; } }
+  function loadLang(){ try{ return localStorage.getItem('karto-lang') || 'en'; }catch(e){ return 'en'; } }
   function saveLang(l){ try{ localStorage.setItem('karto-lang', l); }catch(e){} }
   function loadStreak(){
     try{ const raw = localStorage.getItem('karto-streak'); streak = raw ? JSON.parse(raw) : {count:0,lastDate:null}; }
@@ -615,7 +615,7 @@
       <div class="syncbar" id="syncBar"></div>
       <div class="boxes" id="boxStrip"></div>
       <div id="view"></div>
-      <footer>Karto · Leitner system · <a href="./privacy.html" style="color:var(--muted);">Privacy</a> · <a href="./terms.html" style="color:var(--muted);">Terms</a> · <a href="https://paypal.me/KartoApp" target="_blank" style="color:var(--muted);">☕ Buy me a coffee!</a></footer>
+      <footer>Karto · Leitner system · <a href="./privacy.html" style="color:var(--muted);">Privacy</a> · <a href="./terms.html" style="color:var(--muted);">Terms</a> · <a href="https://paypal.me/KartoApp" target="_blank" style="color:var(--muted);">☕ Support</a></footer>
     `;
     if(!isGuest){
       const langToggleBtn = document.getElementById('langToggle');
@@ -945,7 +945,7 @@
   function bootGuest(){
     isGuest = true;
     if(loadTheme()) document.body.classList.add('dark');
-    currentLang = 'ro';
+    currentLang = 'en';
     loadStreak();
     words = buildDemoWords();
     renderShell();
