@@ -933,14 +933,25 @@
 
   // ============ BOOT ============
   async function boot(){
-    if(loadTheme()) document.body.classList.add('dark');
-    currentLang = loadLang();
-    loadStreak();
-    renderShell();
-    await fetchWords();
-    renderBoxStrip();
-    switchTab(currentTab);
+  if(loadTheme()) document.body.classList.add('dark');
+  currentLang = loadLang();
+  loadStreak();
+  renderShell();
+  await fetchWords();
+
+  // New device: the saved pair may have no words while another pair does
+  if(words.length && !words.some(w => w.lang === currentLang)){
+    const counts = {};
+    words.forEach(w => { counts[w.lang] = (counts[w.lang] || 0) + 1; });
+    currentLang = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+    saveLang(currentLang);
+    const toggle = document.getElementById('langToggle');
+    if(toggle) toggle.textContent = `German → ${langName(currentLang)}`;
   }
+
+  renderBoxStrip();
+  switchTab(currentTab);
+}
 
   function bootGuest(){
     isGuest = true;
