@@ -916,7 +916,14 @@
         <div class="help-step"><div class="num">3</div><div><h4>Short daily rounds</h4>
         <p>A round is 10–15 due cards — a few minutes is enough.</p></div></div>
       </div>
-      <div class="panel"><h3>Your account</h3>
+            <div class="panel"><h3>Your account</h3>
+        ${isGuest ? '' : `
+        <p style="font-size:0.85rem; margin:0 0 10px; line-height:1.6;">
+          Signed in as <strong>${escapeHtml(authSession.user.email || '—')}</strong><br>
+          <span style="color:var(--muted); font-size:0.78rem;">
+            Method: ${escapeHtml(authSession.user.app_metadata?.provider || 'unknown')}
+          </span>
+        </p>`}
         <p style="font-size:0.85rem; color:var(--muted); line-height:1.5;">
           Your words are tied to your Karto account and stored securely — only you can see or edit them, even though everyone shares the same app. Log in with the same account on any device to get the same list.
         </p>
